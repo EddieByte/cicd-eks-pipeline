@@ -92,7 +92,7 @@
 - name: Pull master public key from SSM
   command: >
     aws ssm get-parameter
-    --name "/jenkins/master-public-key"
+    --name "{{ ssm_parameter_name }}"
     --query Parameter.Value
     --output text
     --region {{ aws_region_meta.content }}

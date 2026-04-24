@@ -37,3 +37,6 @@ else
   git clone ${github_repo} /home/ubuntu/cicd-eks-pipeline
 fi
 chown -R ubuntu:ubuntu /home/ubuntu/cicd-eks-pipeline
+
+# Install required Ansible collections
+sudo -u ubuntu ansible-galaxy collection install -r /home/ubuntu/cicd-eks-pipeline/ansible/requirements.yml

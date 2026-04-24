@@ -8,10 +8,6 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.0"
     }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.0"
-    }
   }
 }
 
@@ -85,42 +81,4 @@ resource "local_file" "ansible_inventory" {
     key_name     = var.key_name
   })
   filename = "${path.module}/../../ansible/inventory/hosts.ini"
-}
-
-# ── Copy inventory to control node and run playbooks ─────────────────────────
-
-resource "null_resource" "run_ansible" {
-  depends_on = [module.control_node, local_file.ansible_inventory]
-
-  triggers = {
-    master_id    = module.master.instance_id
-    agent_id     = module.agent.instance_id
-    sonarqube_id = module.sonarqube.instance_id
-  }
-
-  provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
-    command     = <<-EOT
-      Write-Host "Waiting for control node to finish booting..."
-      Start-Sleep -Seconds 180
-
-      # Ensure inventory directory exists on control node
-      ssh -o StrictHostKeyChecking=no `
-          -i "$env:USERPROFILE\.ssh\${var.key_name}.pem" `
-          ubuntu@${module.control_node.public_ip} `
-          'mkdir -p /home/ubuntu/cicd-eks-pipeline/ansible/inventory'
-
-      # Copy generated inventory to control node
-      scp -o StrictHostKeyChecking=no `
-          -i "$env:USERPROFILE\.ssh\${var.key_name}.pem" `
-          "${path.module}/../../ansible/inventory/hosts.ini" `
-          "ubuntu@${module.control_node.public_ip}:/home/ubuntu/cicd-eks-pipeline/ansible/inventory/hosts.ini"
-
-      # Run playbooks in order on the control node
-      ssh -o StrictHostKeyChecking=no `
-          -i "$env:USERPROFILE\.ssh\${var.key_name}.pem" `
-          ubuntu@${module.control_node.public_ip} `
-          'cd /home/ubuntu/cicd-eks-pipeline/ansible && ansible-playbook -i inventory/hosts.ini --private-key ~/.ssh/${var.key_name}.pem playbooks/master.yml && ansible-playbook -i inventory/hosts.ini --private-key ~/.ssh/${var.key_name}.pem playbooks/agent.yml && ansible-playbook -i inventory/hosts.ini --private-key ~/.ssh/${var.key_name}.pem playbooks/sonarqube.yml'
-    EOT
-  }
 }

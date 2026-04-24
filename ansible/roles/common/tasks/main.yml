@@ -13,3 +13,13 @@
   alternatives:
     name: java
     path: /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+
+- name: Check if reboot is required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+
+- name: Reboot if required
+  reboot:
+    reboot_timeout: 120
+  when: reboot_required.stat.exists

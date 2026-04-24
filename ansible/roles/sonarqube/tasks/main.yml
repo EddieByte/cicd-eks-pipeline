@@ -19,7 +19,7 @@
 - name: Fetch SonarQube DB username from SSM
   command: >
     aws ssm get-parameter
-    --name "/sonarqube/db-username"
+    --name "{{ sonar_db_username_ssm }}"
     --query Parameter.Value
     --output text
     --region {{ aws_region_meta.content }}
@@ -28,7 +28,7 @@
 - name: Fetch SonarQube DB password from SSM
   command: >
     aws ssm get-parameter
-    --name "/sonarqube/db-password"
+    --name "{{ sonar_db_password_ssm }}"
     --with-decryption
     --query Parameter.Value
     --output text
@@ -83,7 +83,7 @@
 - name: Create SonarQube database
   become_user: postgres
   postgresql_db:
-    name: "sonarqube"
+    name: "{{ sonar_db_name }}"
     owner: "{{ sonar_db_user.stdout }}"
     state: present
 
@@ -98,7 +98,7 @@
 
 - name: Download SonarQube
   get_url:
-    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.4.1.88267.zip
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.6.0.92116.zip
     dest: /tmp/sonarqube.zip
 
 - name: Install unzip
@@ -111,11 +111,11 @@
     src: /tmp/sonarqube.zip
     dest: /opt/
     remote_src: yes
-    creates: /opt/sonarqube-10.4.1.88267
+    creates: /opt/sonarqube-10.6.0.92116
 
 - name: Symlink SonarQube directory
   file:
-    src: /opt/sonarqube-10.4.1.88267
+    src: /opt/sonarqube-10.6.0.92116
     dest: /opt/sonarqube
     state: link
     owner: sonarqube
@@ -123,7 +123,7 @@
 
 - name: Set SonarQube directory ownership
   file:
-    path: /opt/sonarqube-10.4.1.88267
+    path: /opt/sonarqube-10.6.0.92116
     owner: sonarqube
     group: sonarqube
     recurse: yes
