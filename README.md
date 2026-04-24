@@ -92,7 +92,20 @@ Step 5 — Ansible inventory generated (hosts.ini)
 
 ### Post-Deploy Manual Steps
 
-**Step 1 — Unlock Jenkins:**
+**Step 1 — Bootstrap Jenkins Master (run once from control node):**
+
+Before accessing the Jenkins UI, run the master playbook from the control node to install Jenkins:
+
+```bash
+ssh -i ~/.ssh/labs_kp.pem ubuntu@<control_node_public_ip>
+cd /home/ubuntu/cicd-eks-pipeline/ansible
+ansible-playbook -i inventory/hosts.ini \
+  --private-key ~/.ssh/labs_kp.pem \
+  -e @group_vars/all.yml \
+  playbooks/master.yml
+```
+
+**Step 2 — Unlock Jenkins:**
 1. Open `jenkins_url` in browser
 2. Unlock Jenkins using the initial admin password:
    ```bash
@@ -107,60 +120,18 @@ Step 5 — Ansible inventory generated (hosts.ini)
      sudo cat /var/lib/jenkins/.ssh/id_rsa
      ```
 
-**Step 2 — Run the Infrastructure Configuration Pipeline:**
+**Step 3 — Create the Infrastructure Configuration Pipeline:**
+1. `Dashboard → New Item → Pipeline → Name: infrastructure-config`
+2. Under Pipeline, select `Pipeline script from SCM`
+3. Set SCM to Git, repo URL: `https://github.com/EddieByte/cicd-eks-pipeline`
+4. Set Script Path to: `jenkins/infrastructure-config/Jenkinsfile`
+5. Update `CONTROL_NODE_IP` in the Jenkinsfile with `control_node_private_ip` from Terraform outputs
+6. Commit and push, then run the job
 
-Create a Jenkins pipeline job named `infrastructure-config` with the following stages:
+This job runs once after Jenkins is set up. It configures the agent and SonarQube via Ansible.
+The Jenkinsfile is at `jenkins/infrastructure-config/Jenkinsfile`.
 
-```groovy
-pipeline {
-    agent any
-    stages {
-        stage('Copy Inventory') {
-            steps {
-                sh '''
-                    scp -o StrictHostKeyChecking=no \
-                        ansible/inventory/hosts.ini \
-                        ubuntu@<control_node_ip>:/home/ubuntu/cicd-eks-pipeline/ansible/inventory/hosts.ini
-                '''
-            }
-        }
-        stage('Configure Master') {
-            steps {
-                sh '''
-                    ssh ubuntu@<control_node_ip> \
-                        "cd /home/ubuntu/cicd-eks-pipeline/ansible && \
-                         ansible-playbook -i inventory/hosts.ini \
-                         -e @group_vars/all.yml playbooks/master.yml"
-                '''
-            }
-        }
-        stage('Configure Agent') {
-            steps {
-                sh '''
-                    ssh ubuntu@<control_node_ip> \
-                        "cd /home/ubuntu/cicd-eks-pipeline/ansible && \
-                         ansible-playbook -i inventory/hosts.ini \
-                         -e @group_vars/all.yml playbooks/agent.yml"
-                '''
-            }
-        }
-        stage('Configure SonarQube') {
-            steps {
-                sh '''
-                    ssh ubuntu@<control_node_ip> \
-                        "cd /home/ubuntu/cicd-eks-pipeline/ansible && \
-                         ansible-playbook -i inventory/hosts.ini \
-                         -e @group_vars/all.yml playbooks/sonarqube.yml"
-                '''
-            }
-        }
-    }
-}
-```
-
-This job runs once after Jenkins is set up, before any application pipelines.
-
-**Step 3 — Configure SonarQube:**
+**Step 4 — Configure SonarQube:**
 1. Open `sonarqube_url` in browser (default login: `admin` / `admin`)
 2. Generate a global analysis token
 3. Add token to Jenkins credentials as `Secret text`

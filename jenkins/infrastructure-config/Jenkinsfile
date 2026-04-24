@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    environment {
+        CONTROL_NODE_IP = "<control_node_private_ip>"
+        ANSIBLE_DIR     = "/home/ubuntu/cicd-eks-pipeline/ansible"
+    }
+
+    stages {
+        stage('Configure Agent') {
+            steps {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
+                        "cd ${ANSIBLE_DIR} && \
+                         ansible-playbook \
+                         -e @group_vars/all.yml \
+                         playbooks/agent.yml"
+                '''
+            }
+        }
+
+        stage('Configure SonarQube') {
+            steps {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
+                        "cd ${ANSIBLE_DIR} && \
+                         ansible-playbook \
+                         -e @group_vars/all.yml \
+                         playbooks/sonarqube.yml"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Infrastructure configuration complete. All servers are ready.'
+        }
+        failure {
+            echo 'Infrastructure configuration failed. Check the logs above.'
+        }
+    }
+}

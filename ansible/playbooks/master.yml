@@ -1,6 +1,6 @@
 ---
 - name: Configure Jenkins Master
-  hosts: jenkins_master
+  hosts: Jenkins-Master
   become: yes
 
   roles:
