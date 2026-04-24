@@ -7,6 +7,15 @@ pipeline {
     }
 
     stages {
+        stage('Update Playbooks') {
+            steps {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
+                        "git -C /home/ubuntu/cicd-eks-pipeline pull --ff-only"
+                '''
+            }
+        }
+
         stage('Configure Agent') {
             steps {
                 sh '''
