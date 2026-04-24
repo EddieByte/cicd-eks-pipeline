@@ -6,7 +6,7 @@
 
 - name: Install Java
   apt:
-    name: "{{ java_version }}"
+    name: "openjdk-21-jdk"
     state: present
 
 - name: Set Java 21 as default
