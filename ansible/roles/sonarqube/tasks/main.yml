@@ -19,7 +19,7 @@
 - name: Fetch SonarQube DB username from SSM
   command: >
     aws ssm get-parameter
-    --name "{{ sonar_db_username_ssm }}"
+    --name "/sonarqube/db-username"
     --query Parameter.Value
     --output text
     --region {{ aws_region_meta.content }}
@@ -28,7 +28,7 @@
 - name: Fetch SonarQube DB password from SSM
   command: >
     aws ssm get-parameter
-    --name "{{ sonar_db_password_ssm }}"
+    --name "/sonarqube/db-password"
     --with-decryption
     --query Parameter.Value
     --output text
@@ -83,7 +83,7 @@
 - name: Create SonarQube database
   become_user: postgres
   postgresql_db:
-    name: "{{ sonar_db_name }}"
+    name: "sonarqube"
     owner: "{{ sonar_db_user.stdout }}"
     state: present
 
