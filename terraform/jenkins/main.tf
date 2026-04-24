@@ -99,25 +99,28 @@ resource "null_resource" "run_ansible" {
   }
 
   provisioner "local-exec" {
-    interpreter = ["bash", "-c"]
+    interpreter = ["PowerShell", "-Command"]
     command     = <<-EOT
-      echo "Waiting for control node to finish booting..."
-      sleep 90
+      Write-Host "Waiting for control node to finish booting..."
+      Start-Sleep -Seconds 90
+
+      # Ensure inventory directory exists on control node
+      ssh -o StrictHostKeyChecking=no `
+          -i "$env:USERPROFILE\.ssh\${var.key_name}.pem" `
+          ubuntu@${module.control_node.public_ip} `
+          'mkdir -p /home/ubuntu/cicd-eks-pipeline/ansible/inventory'
 
       # Copy generated inventory to control node
-      scp -o StrictHostKeyChecking=no \
-          -i ~/.ssh/${var.key_name}.pem \
-          ${path.module}/../../ansible/inventory/hosts.ini \
-          ubuntu@${module.control_node.public_ip}:/home/ubuntu/cicd-eks-pipeline/ansible/inventory/hosts.ini
+      scp -o StrictHostKeyChecking=no `
+          -i "$env:USERPROFILE\.ssh\${var.key_name}.pem" `
+          "${path.module}/../../ansible/inventory/hosts.ini" `
+          "ubuntu@${module.control_node.public_ip}:/home/ubuntu/cicd-eks-pipeline/ansible/inventory/hosts.ini"
 
       # Run playbooks in order on the control node
-      ssh -o StrictHostKeyChecking=no \
-          -i ~/.ssh/${var.key_name}.pem \
-          ubuntu@${module.control_node.public_ip} \
-          'cd /home/ubuntu/cicd-eks-pipeline/ansible && \
-           ansible-playbook playbooks/master.yml && \
-           ansible-playbook playbooks/agent.yml && \
-           ansible-playbook playbooks/sonarqube.yml'
+      ssh -o StrictHostKeyChecking=no `
+          -i "$env:USERPROFILE\.ssh\${var.key_name}.pem" `
+          ubuntu@${module.control_node.public_ip} `
+          'cd /home/ubuntu/cicd-eks-pipeline/ansible && ansible-playbook -i inventory/hosts.ini --private-key ~/.ssh/${var.key_name}.pem playbooks/master.yml && ansible-playbook -i inventory/hosts.ini --private-key ~/.ssh/${var.key_name}.pem playbooks/agent.yml && ansible-playbook -i inventory/hosts.ini --private-key ~/.ssh/${var.key_name}.pem playbooks/sonarqube.yml'
     EOT
   }
 }
