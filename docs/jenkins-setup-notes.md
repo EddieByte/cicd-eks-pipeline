@@ -84,3 +84,27 @@
 - Never edit XML in GitHub web editor — use VS Code locally to
   avoid breaking tag nesting
 - Reboot after kernel upgrade warnings before starting services
+
+
+# Security Integration — Trivy Container Scanning
+
+## Infrastructure Details
+- **Stage Name:** Vulnerability Scan
+- **Tool:** Trivy (`aquasec/trivy`)
+- **Integration:** Jenkins Pipeline (Docker-in-Docker)
+
+---
+
+## Issue 10 — Docker API Version Mismatch
+
+- **Error:** `Error response from daemon: client version 1.47 is too new. Maximum supported API version is 1.41`
+
+- **Root Cause:** The Trivy container's internal Docker client was newer than the Docker daemon running on the host (Jenkins Agent). This prevented the scanner from accessing the local image for analysis.
+
+- **Fix:** Explicitly forced the Docker API version compatibility in the Jenkinsfile environment block to match the host daemon.
+
+- **Implementation:**
+  ```groovy
+  environment {
+      DOCKER_API_VERSION = '1.41'
+  }
