@@ -30,5 +30,10 @@ chmod 600 /home/ubuntu/.ssh/${key_name}.pem
 chown ubuntu:ubuntu /home/ubuntu/.ssh/${key_name}.pem
 
 # Clone the repo so playbooks are ready
-git clone ${github_repo} /home/ubuntu/cicd-eks-pipeline
+if [ -d "/home/ubuntu/cicd-eks-pipeline/.git" ]; then
+  git -C /home/ubuntu/cicd-eks-pipeline pull
+else
+  rm -rf /home/ubuntu/cicd-eks-pipeline
+  git clone ${github_repo} /home/ubuntu/cicd-eks-pipeline
+fi
 chown -R ubuntu:ubuntu /home/ubuntu/cicd-eks-pipeline

@@ -102,7 +102,7 @@ resource "null_resource" "run_ansible" {
     interpreter = ["PowerShell", "-Command"]
     command     = <<-EOT
       Write-Host "Waiting for control node to finish booting..."
-      Start-Sleep -Seconds 90
+      Start-Sleep -Seconds 180
 
       # Ensure inventory directory exists on control node
       ssh -o StrictHostKeyChecking=no `
