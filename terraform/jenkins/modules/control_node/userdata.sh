@@ -8,7 +8,13 @@ apt-get install -y python3 python3-pip git awscli software-properties-common
 
 # Install Ansible
 add-apt-repository --yes --update ppa:ansible/ansible
-apt-get install -y ansible python3-boto3 python3-botocore
+apt-get install -y ansible
+
+# Install boto3 via pip for the correct Python environment Ansible uses
+pip3 install boto3 botocore
+
+# Verify boto3 is accessible to Ansible's Python
+python3 -c "import boto3" || { echo 'boto3 import failed'; exit 1; }
 
 # Get IMDSv2 token
 TOKEN=$(curl -s -X PUT 'http://169.254.169.254/latest/api/token' \
