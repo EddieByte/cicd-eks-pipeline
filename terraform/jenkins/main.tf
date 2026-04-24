@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
   }
 }
 
@@ -69,16 +65,4 @@ module "control_node" {
   ssm_ssh_key_path  = var.ssm_ssh_key_path
   github_repo       = var.github_repo
   tags              = var.tags
-}
-
-# ── Ansible Inventory ─────────────────────────────────────────────────────────
-
-resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/inventory.tpl", {
-    master_ip    = module.master.public_ip
-    agent_ip     = module.agent.public_ip
-    sonarqube_ip = module.sonarqube.public_ip
-    key_name     = var.key_name
-  })
-  filename = "${path.module}/../../ansible/inventory/hosts.ini"
 }
