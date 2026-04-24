@@ -11,7 +11,7 @@ add-apt-repository --yes --update ppa:ansible/ansible
 apt-get install -y ansible
 
 # Install boto3 via pip for the correct Python environment Ansible uses
-pip3 install boto3 botocore
+pip3 install --upgrade boto3 botocore
 
 # Verify boto3 is accessible to Ansible's Python
 python3 -c "import boto3" || { echo 'boto3 import failed'; exit 1; }
