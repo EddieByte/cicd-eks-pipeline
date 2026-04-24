@@ -1,0 +1,24 @@
+# Old module structure (superseded by jenkins/modules/)
+Jenkins-Master/
+\Jenkins-Master
+
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Var files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
+# Crash logs
+crash.log
+crash.*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+#Personal Files
+Jenkins-Master

@@ -1,0 +1,113 @@
+---
+- name: Install Docker dependencies
+  apt:
+    name: [ca-certificates, curl, gnupg]
+    state: present
+
+- name: Create Docker keyring directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Docker GPG key
+  shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+      | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+
+- name: Add Docker apt repository
+  shell: |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+    https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+    | tee /etc/apt/sources.list.d/docker.list > /dev/null
+  args:
+    creates: /etc/apt/sources.list.d/docker.list
+
+- name: Install Docker
+  apt:
+    name: [docker-ce, docker-ce-cli, containerd.io]
+    state: present
+    update_cache: yes
+
+- name: Enable and start Docker
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Add ubuntu user to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+- name: Create jenkins user
+  user:
+    name: jenkins
+    shell: /bin/bash
+    create_home: yes
+
+- name: Add jenkins user to docker group
+  user:
+    name: jenkins
+    groups: docker
+    append: yes
+
+- name: Enable SSH public key authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PubkeyAuthentication'
+    line: 'PubkeyAuthentication yes'
+
+- name: Enable authorized keys file
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?AuthorizedKeysFile'
+    line: 'AuthorizedKeysFile .ssh/authorized_keys'
+
+- name: Restart SSH
+  systemd:
+    name: ssh
+    state: restarted
+
+- name: Get IMDSv2 token
+  uri:
+    url: http://169.254.169.254/latest/api/token
+    method: PUT
+    headers:
+      X-aws-ec2-metadata-token-ttl-seconds: "21600"
+    return_content: yes
+  register: imds_token
+
+- name: Get AWS region from instance metadata
+  uri:
+    url: http://169.254.169.254/latest/meta-data/placement/region
+    headers:
+      X-aws-ec2-metadata-token: "{{ imds_token.content }}"
+    return_content: yes
+  register: aws_region_meta
+
+- name: Pull master public key from SSM
+  command: >
+    aws ssm get-parameter
+    --name "{{ ssm_parameter_name }}"
+    --query Parameter.Value
+    --output text
+    --region {{ aws_region_meta.content }}
+  register: master_public_key
+
+- name: Ensure .ssh directory exists for ubuntu user
+  file:
+    path: /home/ubuntu/.ssh
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0700'
+
+- name: Add master public key to authorized_keys
+  authorized_key:
+    user: ubuntu
+    key: "{{ master_public_key.stdout }}"
+    state: present

@@ -1,0 +1,15 @@
+---
+- name: Update and upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install Java
+  apt:
+    name: "{{ java_version }}"
+    state: present
+
+- name: Set Java 21 as default
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/java-21-openjdk-amd64/bin/java

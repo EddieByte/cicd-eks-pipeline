@@ -1,0 +1,73 @@
+---
+- name: Create Jenkins keyring directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Jenkins GPG key
+  get_url:
+    url: https://pkg.jenkins.io/debian/jenkins.io-2026.key
+    dest: /etc/apt/keyrings/jenkins-keyring.asc
+
+- name: Add Jenkins apt repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/"
+    state: present
+    filename: jenkins
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    state: present
+    update_cache: yes
+
+- name: Enable and start Jenkins
+  systemd:
+    name: jenkins
+    enabled: yes
+    state: started
+
+- name: Create Jenkins .ssh directory
+  file:
+    path: /var/lib/jenkins/.ssh
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0700'
+
+- name: Generate SSH keypair for master→agent communication
+  openssh_keypair:
+    path: /var/lib/jenkins/.ssh/id_rsa
+    type: rsa
+    size: 4096
+    comment: jenkins-master
+    owner: jenkins
+    group: jenkins
+  register: ssh_keypair
+
+- name: Get IMDSv2 token
+  uri:
+    url: http://169.254.169.254/latest/api/token
+    method: PUT
+    headers:
+      X-aws-ec2-metadata-token-ttl-seconds: "21600"
+    return_content: yes
+  register: imds_token
+
+- name: Get AWS region from instance metadata
+  uri:
+    url: http://169.254.169.254/latest/meta-data/placement/region
+    headers:
+      X-aws-ec2-metadata-token: "{{ imds_token.content }}"
+    return_content: yes
+  register: aws_region_meta
+
+- name: Push master public key to SSM
+  command: >
+    aws ssm put-parameter
+    --name "{{ ssm_parameter_name }}"
+    --value "{{ ssh_keypair.public_key }}"
+    --type String
+    --overwrite
+    --region {{ aws_region_meta.content }}

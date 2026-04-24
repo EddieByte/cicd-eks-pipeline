@@ -1,0 +1,6 @@
+aws_region: "us-east-1"
+ssm_parameter_name: "/jenkins/master-public-key"
+sonar_db_username_ssm: "/sonarqube/db-username"
+sonar_db_password_ssm: "/sonarqube/db-password"
+sonar_db_name: "sonarqube"
+java_version: "openjdk-21-jdk"
