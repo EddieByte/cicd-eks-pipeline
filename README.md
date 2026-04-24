@@ -8,3 +8,4 @@ This repository captures the implementation notes and operational lessons from b
 - `docs/eks-gitops.md` — EKS deployment troubleshooting and cluster issues.
 - `docs/jenkins-setup-notes.md` — Jenkins installation, pipeline behavior, and security integration.
 - `docs/sonarqube-postgres.md` — SonarQube + PostgreSQL deployment notes and recovery steps.
+- `docs/terraform-ansible-setup-notes.md` — Terraform IaC and Ansible configuration management setup, issues, and architecture decisions.
