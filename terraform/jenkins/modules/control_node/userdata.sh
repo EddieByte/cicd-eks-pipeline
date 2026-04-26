@@ -9,6 +9,10 @@ apt-get install -y python3 python3-pip git software-properties-common
 # Install awscli via pip to avoid version conflicts with boto3
 pip3 install --upgrade awscli boto3 botocore
 
+# Install Ansible
+add-apt-repository --yes --update ppa:ansible/ansible
+apt-get install -y ansible
+
 # Verify boto3 is accessible to Ansible's Python
 python3 -c "import boto3" || { echo 'boto3 import failed'; exit 1; }
 
