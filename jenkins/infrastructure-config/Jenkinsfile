@@ -1,9 +1,16 @@
 pipeline {
     agent any
 
+    parameters {
+        string(
+            name: 'CONTROL_NODE_IP',
+            defaultValue: '',
+            description: 'Private IP of the Ansible Control Node (from terraform output control_node_private_ip)'
+        )
+    }
+
     environment {
-        CONTROL_NODE_IP = "<control_node_private_ip>"
-        ANSIBLE_DIR     = "/home/ubuntu/cicd-eks-pipeline/ansible"
+        ANSIBLE_DIR = "/home/ubuntu/cicd-eks-pipeline/ansible"
     }
 
     stages {
