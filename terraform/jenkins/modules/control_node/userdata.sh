@@ -4,14 +4,10 @@ set -euo pipefail
 hostnamectl set-hostname Ansible-Control-Node
 
 apt-get update -y
-apt-get install -y python3 python3-pip git awscli software-properties-common
+apt-get install -y python3 python3-pip git software-properties-common
 
-# Install Ansible
-add-apt-repository --yes --update ppa:ansible/ansible
-apt-get install -y ansible
-
-# Install boto3 via pip for the correct Python environment Ansible uses
-pip3 install --upgrade boto3 botocore
+# Install awscli via pip to avoid version conflicts with boto3
+pip3 install --upgrade awscli boto3 botocore
 
 # Verify boto3 is accessible to Ansible's Python
 python3 -c "import boto3" || { echo 'boto3 import failed'; exit 1; }
