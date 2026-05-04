@@ -7,6 +7,11 @@ pipeline {
             defaultValue: '',
             description: 'Private IP of the Ansible Control Node (from terraform output control_node_private_ip)'
         )
+        string(
+            name: 'SSH_CREDENTIAL_ID',
+            defaultValue: 'labs-kp',
+            description: 'Jenkins credential ID for SSH access to the control node'
+        )
     }
 
     environment {
@@ -14,36 +19,28 @@ pipeline {
     }
 
     stages {
-        stage('Update Playbooks') {
+        stage('Update Repository') {
             steps {
-                sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
-                        "git -C /home/ubuntu/cicd-eks-pipeline pull --ff-only"
-                '''
+                sshagent([params.SSH_CREDENTIAL_ID]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
+                            "git -C /home/ubuntu/cicd-eks-pipeline pull --ff-only"
+                    '''
+                }
             }
         }
 
-        stage('Configure Agent') {
+        stage('Execute Infrastructure Playbooks') {
             steps {
-                sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
-                        "cd ${ANSIBLE_DIR} && \
-                         ansible-playbook \
-                         -e @group_vars/all.yml \
-                         playbooks/agent.yml"
-                '''
-            }
-        }
-
-        stage('Configure SonarQube') {
-            steps {
-                sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
-                        "cd ${ANSIBLE_DIR} && \
-                         ansible-playbook \
-                         -e @group_vars/all.yml \
-                         playbooks/sonarqube.yml"
-                '''
+                sshagent([params.SSH_CREDENTIAL_ID]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@${CONTROL_NODE_IP} \
+                            "cd ${ANSIBLE_DIR} && \
+                             ansible-playbook \
+                             -e @group_vars/all.yml \
+                             playbooks/site.yml"
+                    '''
+                }
             }
         }
     }

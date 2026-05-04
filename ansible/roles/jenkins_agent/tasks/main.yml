@@ -98,16 +98,16 @@
     --region {{ aws_region_meta.content }}
   register: master_public_key
 
-- name: Ensure .ssh directory exists for ubuntu user
+- name: Ensure .ssh directory exists for jenkins user
   file:
-    path: /home/ubuntu/.ssh
+    path: /home/jenkins/.ssh
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: jenkins
+    group: jenkins
     mode: '0700'
 
-- name: Add master public key to authorized_keys
+- name: Add master public key to jenkins authorized_keys
   authorized_key:
-    user: ubuntu
+    user: jenkins
     key: "{{ master_public_key.stdout }}"
     state: present

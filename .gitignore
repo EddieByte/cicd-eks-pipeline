@@ -1,0 +1,17 @@
+# Terraform state files and local cache
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
+# Crash logs
+crash.log
+crash.*.log
+
+# OS artifacts
+.DS_Store
+Thumbs.db

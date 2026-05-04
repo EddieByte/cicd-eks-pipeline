@@ -118,8 +118,6 @@
     src: /opt/sonarqube-10.6.0.92116
     dest: /opt/sonarqube
     state: link
-    owner: sonarqube
-    group: sonarqube
 
 - name: Set SonarQube directory ownership
   file:

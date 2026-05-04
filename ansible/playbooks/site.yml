@@ -1,0 +1,6 @@
+---
+- import_playbook: master.yml
+
+- import_playbook: sonarqube.yml
+
+- import_playbook: agent.yml  # always last

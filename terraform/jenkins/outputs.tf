@@ -68,6 +68,11 @@ output "control_node_public_ip" {
   value       = module.control_node.public_ip
 }
 
+output "control_node_private_ip" {
+  description = "Ansible Control Node private IP — use this in the infrastructure-config pipeline"
+  value       = module.control_node.private_ip
+}
+
 output "control_node_instance_id" {
   description = "Ansible Control Node instance ID"
   value       = module.control_node.instance_id
