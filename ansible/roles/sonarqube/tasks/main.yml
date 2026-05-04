@@ -96,6 +96,12 @@
     shell: /bin/bash
     create_home: yes
 
+- name: Install Java 17 for SonarQube
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+
 - name: Download SonarQube
   get_url:
     url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.7.0.96327.zip
