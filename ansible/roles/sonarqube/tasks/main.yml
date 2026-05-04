@@ -1,4 +1,15 @@
 ---
+- name: Install Java 17 for SonarQube
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+
+- name: Set Java 17 as system default on SonarQube server
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+
 - name: Get IMDSv2 token
   uri:
     url: http://169.254.169.254/latest/api/token
