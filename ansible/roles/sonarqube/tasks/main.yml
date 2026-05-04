@@ -98,7 +98,7 @@
 
 - name: Download SonarQube
   get_url:
-    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.6.0.92116.zip
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.7.0.96327.zip
     dest: /tmp/sonarqube.zip
 
 - name: Install unzip
@@ -111,17 +111,17 @@
     src: /tmp/sonarqube.zip
     dest: /opt/
     remote_src: yes
-    creates: /opt/sonarqube-10.6.0.92116
+    creates: /opt/sonarqube-10.7.0.96327
 
 - name: Symlink SonarQube directory
   file:
-    src: /opt/sonarqube-10.6.0.92116
+    src: /opt/sonarqube-10.7.0.96327
     dest: /opt/sonarqube
     state: link
 
 - name: Set SonarQube directory ownership
   file:
-    path: /opt/sonarqube-10.6.0.92116
+    path: /opt/sonarqube-10.7.0.96327
     owner: sonarqube
     group: sonarqube
     recurse: yes
