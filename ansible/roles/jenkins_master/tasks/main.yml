@@ -7,14 +7,14 @@
 
 - name: Download Jenkins GPG key
   shell: |
-    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | \
-    gpg --dearmor -o /etc/apt/keyrings/jenkins-keyring.gpg
+    curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2026.key | \
+    gpg --dearmor -o /etc/apt/keyrings/jenkins-keyring.gpg --yes
   args:
     creates: /etc/apt/keyrings/jenkins-keyring.gpg
 
 - name: Add Jenkins apt repository
   apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/"
+    repo: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian binary/"
     state: present
     filename: jenkins
 
