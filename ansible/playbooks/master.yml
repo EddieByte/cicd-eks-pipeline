@@ -2,6 +2,8 @@
 - name: Configure Jenkins Master
   hosts: Jenkins_Master
   become: yes
+  vars:
+    ssm_parameter_name: "/jenkins/master-public-key"
 
   roles:
     - common

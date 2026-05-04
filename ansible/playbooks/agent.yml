@@ -2,6 +2,10 @@
 - name: Configure Jenkins Agent
   hosts: Jenkins_Agent
   become: yes
+  vars:
+    ssm_parameter_name: "/jenkins/master-public-key"
+    sonar_db_username_ssm: "/sonarqube/db-username"
+    sonar_db_password_ssm: "/sonarqube/db-password"
 
   roles:
     - common

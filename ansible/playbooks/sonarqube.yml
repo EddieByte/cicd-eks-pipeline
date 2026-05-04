@@ -2,6 +2,10 @@
 - name: Configure SonarQube
   hosts: SonarQube
   become: yes
+  vars:
+    sonar_db_username_ssm: "/sonarqube/db-username"
+    sonar_db_password_ssm: "/sonarqube/db-password"
+    sonar_db_name: "sonarqube"
 
   roles:
     - common
