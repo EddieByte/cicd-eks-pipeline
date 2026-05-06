@@ -1,15 +1,4 @@
 ---
-- name: Install Java 17 for SonarQube
-  apt:
-    name: openjdk-17-jdk
-    state: present
-    update_cache: yes
-
-- name: Set Java 17 as system default on SonarQube server
-  alternatives:
-    name: java
-    path: /usr/lib/jvm/java-17-openjdk-amd64/bin/java
-
 - name: Get IMDSv2 token
   uri:
     url: http://169.254.169.254/latest/api/token
@@ -107,15 +96,9 @@
     shell: /bin/bash
     create_home: yes
 
-- name: Install Java 17 for SonarQube
-  apt:
-    name: openjdk-17-jdk
-    state: present
-    update_cache: yes
-
 - name: Download SonarQube
   get_url:
-    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-2025.1.0.102122.zip
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-26.1.0.118079.zip
     dest: /tmp/sonarqube.zip
 
 - name: Install unzip
@@ -128,17 +111,17 @@
     src: /tmp/sonarqube.zip
     dest: /opt/
     remote_src: yes
-    creates: /opt/sonarqube-2025.1.0.102122
+    creates: /opt/sonarqube-26.1.0.118079
 
 - name: Symlink SonarQube directory
   file:
-    src: /opt/sonarqube-2025.1.0.102122
+    src: /opt/sonarqube-26.1.0.118079
     dest: /opt/sonarqube
     state: link
 
 - name: Set SonarQube directory ownership
   file:
-    path: /opt/sonarqube-2025.1.0.102122
+    path: /opt/sonarqube-26.1.0.118079
     owner: sonarqube
     group: sonarqube
     recurse: yes
