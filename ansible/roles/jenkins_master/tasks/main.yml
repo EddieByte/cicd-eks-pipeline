@@ -40,9 +40,8 @@
 
 - name: Generate SSH keypair for master→agent communication
   openssh_keypair:
-    path: /var/lib/jenkins/.ssh/id_rsa
-    type: rsa
-    size: 4096
+    path: /var/lib/jenkins/.ssh/id_ed25519
+    type: ed25519
     comment: jenkins-master
     owner: jenkins
     group: jenkins

@@ -160,3 +160,4 @@ aws ssm delete-parameter --name "/sonarqube/db-password" --region us-east-1
 > - Restrict `allowed_ssh_cidrs` to your IP (`x.x.x.x/32`)
 > - Restrict SonarQube port 9000 to known CIDRs or place behind an ALB
 > - Migrate Terraform state to S3 + DynamoDB for team environments
+> - Use private subnets with NAT gateways for EKS clusters instead of the default VPC's public subnets

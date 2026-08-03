@@ -4,7 +4,7 @@ regions:
   - us-east-1
 
 filters:
-  tag:Project: DevPulse
+  tag:Project: eddie-register-app
   instance-state-name: running
 
 keyed_groups:
