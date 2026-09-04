@@ -20,23 +20,29 @@ Before running `terraform apply`, ensure the following are in place:
 
 1. AWS CLI configured (`aws configure`)
 2. Terraform installed
-3. `labs_kp.pem` at `C:\Users\<you>\.ssh\labs_kp.pem`
-4. The following SSM parameters stored in `us-east-1`:
+3. Your EC2 private key file and key pair name
+4. The following SSM parameters stored in your selected AWS region:
 
 ```bash
+AWS_REGION="<aws-region>"
+SSH_KEY_PATH="<path-to-private-key>"
+SSH_PARAMETER_NAME="<ssm-parameter-for-private-key>"
+SONAR_DB_USERNAME_PARAMETER="<ssm-parameter-for-db-username>"
+SONAR_DB_PASSWORD_PARAMETER="<ssm-parameter-for-db-password>"
+
 # EC2 private key — used by Ansible control node to SSH into instances
-aws ssm put-parameter --name "/jenkins/ssh-private-key" \
-  --value "$(cat ~/.ssh/labs_kp.pem)" --type SecureString --region us-east-1
+aws ssm put-parameter --name "$SSH_PARAMETER_NAME" \
+  --value "$(cat "$SSH_KEY_PATH")" --type SecureString --region "$AWS_REGION"
 
 # SonarQube PostgreSQL credentials
-aws ssm put-parameter --name "/sonarqube/db-username" \
-  --value "sonar" --type String --region us-east-1
+aws ssm put-parameter --name "$SONAR_DB_USERNAME_PARAMETER" \
+  --value "<database-username>" --type String --region "$AWS_REGION"
 
-aws ssm put-parameter --name "/sonarqube/db-password" \
-  --value "<your-strong-password>" --type SecureString --region us-east-1
+aws ssm put-parameter --name "$SONAR_DB_PASSWORD_PARAMETER" \
+  --value "<strong-database-password>" --type SecureString --region "$AWS_REGION"
 ```
 
-5. Code pushed to GitHub (control node clones this repo at boot)
+5. Code pushed to your Git repository (the control node clones it at boot)
 
 ---
 
@@ -64,8 +70,8 @@ Step 4 — Ansible Control Node EC2 created (depends on master, agent, sonarqube
   - Ubuntu 22.04, t3.micro
   - Hostname set to Ansible-Control-Node
   - Ansible, Git, and awscli installed via userdata
-  - Pulls labs_kp.pem from SSM → placed at ~/.ssh/labs_kp.pem
-  - Clones this GitHub repo → /home/ubuntu/cicd-eks-pipeline
+  - Pulls the configured private key from SSM and places it at the configured SSH path
+  - Clones the configured Git repository into the configured repository directory
 
 Step 5 — Ansible inventory generated (hosts.ini)
   - Terraform writes public IPs of all instances into
@@ -97,10 +103,10 @@ Step 5 — Ansible inventory generated (hosts.ini)
 Before accessing the Jenkins UI, run the master playbook from the control node to install Jenkins:
 
 ```bash
-ssh -i ~/.ssh/labs_kp.pem ubuntu@<control_node_public_ip>
-cd /home/ubuntu/cicd-eks-pipeline/ansible
+ssh -i <path-to-private-key> <linux-user>@<control_node_public_ip>
+cd <repository-directory>/ansible
 ansible-playbook -i inventory/hosts.ini \
-  --private-key ~/.ssh/labs_kp.pem \
+  --private-key <path-to-private-key> \
   -e @group_vars/all.yml \
   playbooks/master.yml
 ```
@@ -109,7 +115,7 @@ ansible-playbook -i inventory/hosts.ini \
 1. Open `jenkins_url` in browser
 2. Unlock Jenkins using the initial admin password:
    ```bash
-   ssh -i ~/.ssh/labs_kp.pem ubuntu@<jenkins_master_public_ip>
+    ssh -i <path-to-private-key> <linux-user>@<jenkins_master_public_ip>
    sudo cat /var/lib/jenkins/secrets/initialAdminPassword
    ```
 3. Install suggested plugins
@@ -123,7 +129,7 @@ ansible-playbook -i inventory/hosts.ini \
 **Step 3 — Create the Infrastructure Configuration Pipeline:**
 1. `Dashboard → New Item → Pipeline → Name: infrastructure-config`
 2. Under Pipeline, select `Pipeline script from SCM`
-3. Set SCM to Git, repo URL: `https://github.com/EddieByte/cicd-eks-pipeline`
+3. Set SCM to Git, repo URL: `<repository-url>`
 4. Set Script Path to: `jenkins/infrastructure-config/Jenkinsfile`
 5. Update `CONTROL_NODE_IP` in the Jenkinsfile with `control_node_private_ip` from Terraform outputs
 6. Commit and push, then run the job
@@ -132,7 +138,7 @@ This job runs once after Jenkins is set up. It configures the agent and SonarQub
 The Jenkinsfile is at `jenkins/infrastructure-config/Jenkinsfile`.
 
 **Step 4 — Configure SonarQube:**
-1. Open `sonarqube_url` in browser (default login: `admin` / `admin`)
+1. Open `sonarqube_url` in browser and sign in with the credentials configured for your SonarQube instance
 2. Generate a global analysis token
 3. Add token to Jenkins credentials as `Secret text`
 4. Configure SonarQube webhook pointing back to Jenkins:
@@ -143,17 +149,17 @@ The Jenkinsfile is at `jenkins/infrastructure-config/Jenkinsfile`.
 ### Teardown
 
 ```bash
-cd terraform/jenkins
+cd <terraform-jenkins-directory>
 terraform destroy -auto-approve
 ```
 
 This removes all EC2 instances, security groups, and IAM roles. SSM parameters are not destroyed — delete them manually if needed:
 
 ```bash
-aws ssm delete-parameter --name "/jenkins/ssh-private-key" --region us-east-1
-aws ssm delete-parameter --name "/jenkins/master-public-key" --region us-east-1
-aws ssm delete-parameter --name "/sonarqube/db-username" --region us-east-1
-aws ssm delete-parameter --name "/sonarqube/db-password" --region us-east-1
+aws ssm delete-parameter --name "<ssm-parameter-for-private-key>" --region "<aws-region>"
+aws ssm delete-parameter --name "<ssm-parameter-for-master-public-key>" --region "<aws-region>"
+aws ssm delete-parameter --name "<ssm-parameter-for-db-username>" --region "<aws-region>"
+aws ssm delete-parameter --name "<ssm-parameter-for-db-password>" --region "<aws-region>"
 ```
 
 > **Production Notes:**
