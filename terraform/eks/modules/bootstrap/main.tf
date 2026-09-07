@@ -27,12 +27,14 @@ resource "aws_iam_role_policy" "bootstrap_permissions" {
       {
         Effect = "Allow"
         Action = [
-          "eks:*",
-          "ec2:*",
-          "iam:*",
-          "cloudformation:*",
-          "autoscaling:*",
-          "elasticloadbalancing:*"
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "ec2:DescribeInstances",
+          "ec2:DescribeRegions",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSecurityGroups",
+          "autoscaling:DescribeAutoScalingGroups"
         ]
         Resource = "*"
       },
@@ -40,6 +42,7 @@ resource "aws_iam_role_policy" "bootstrap_permissions" {
         Effect = "Allow"
         Action = [
           "ssm:GetParameter",
+          "ssm:GetParameters",
           "ssm:PutParameter"
         ]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/*"
