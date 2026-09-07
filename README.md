@@ -1,6 +1,6 @@
-# DevPulse CI/CD & GitOps Documentation
+# eddie-register-app CI/CD & GitOps Documentation
 
-This repository captures the implementation notes and operational lessons from building an AWS EKS GitOps pipeline with Jenkins, Argo CD, SonarQube, and container security scanning.
+This repository captures the implementation notes and operational lessons from building an AWS EKS GitOps pipeline with Jenkins, Argo CD, SonarQube, and container security scanning for the eddie-register-app project.
 
 ## Key Docs
 

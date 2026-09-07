@@ -1,16 +1,3 @@
-# ── Default VPC + Subnet ──────────────────────────────────────────────────────
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
 # ── IAM Role ──────────────────────────────────────────────────────────────────
 
 resource "aws_iam_role" "bootstrap" {
@@ -71,7 +58,7 @@ resource "aws_iam_instance_profile" "bootstrap" {
 resource "aws_security_group" "bootstrap" {
   name        = "eks-bootstrap-sg"
   description = "EKS Bootstrap Node: SSH access only"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "SSH"
@@ -96,7 +83,7 @@ resource "aws_security_group" "bootstrap" {
 resource "aws_instance" "bootstrap" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
-  subnet_id                   = data.aws_subnets.default.ids[0]
+  subnet_id                   = var.public_subnet_ids[0]
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.bootstrap.id]
   associate_public_ip_address = true

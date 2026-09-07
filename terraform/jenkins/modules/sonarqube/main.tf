@@ -1,16 +1,3 @@
-# ── Default VPC + Subnet ──────────────────────────────────────────────────────
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
 # ── IAM Role ──────────────────────────────────────────────────────────────────
 
 resource "aws_iam_role" "sonarqube" {
@@ -55,7 +42,7 @@ resource "aws_iam_instance_profile" "sonarqube" {
 resource "aws_security_group" "sonarqube" {
   name        = "sonarqube-sg"
   description = "SonarQube: SSH and web UI access"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "SSH"
@@ -88,7 +75,7 @@ resource "aws_security_group" "sonarqube" {
 resource "aws_instance" "sonarqube" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
-  subnet_id                   = data.aws_subnets.default.ids[0]
+  subnet_id                   = var.subnet_id
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.sonarqube.id]
   associate_public_ip_address = true

@@ -1,16 +1,3 @@
-# ── Default VPC + Subnet ──────────────────────────────────────────────────────
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
 # ── IAM Role ──────────────────────────────────────────────────────────────────
 
 resource "aws_iam_role" "jenkins_master" {
@@ -52,7 +39,7 @@ resource "aws_iam_instance_profile" "jenkins_master" {
 resource "aws_security_group" "jenkins_master" {
   name        = "jenkins-master-sg"
   description = "Jenkins Master: SSH and web UI access"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "SSH"
@@ -85,7 +72,7 @@ resource "aws_security_group" "jenkins_master" {
 resource "aws_instance" "jenkins_master" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
-  subnet_id                   = data.aws_subnets.default.ids[0]
+  subnet_id                   = var.subnet_id
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.jenkins_master.id]
   associate_public_ip_address = true

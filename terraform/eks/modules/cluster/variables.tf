@@ -33,6 +33,16 @@ variable "node_desired" {
   type        = number
 }
 
+variable "vpc_id" {
+  description = "VPC ID for the EKS cluster"
+  type        = string
+}
+
+variable "private_subnet_ids" {
+  description = "Private subnet IDs for EKS control plane and workers"
+  type        = list(string)
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

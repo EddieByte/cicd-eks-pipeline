@@ -33,6 +33,16 @@ variable "ssm_parameter_name" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VPC ID for the Jenkins master"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for the Jenkins master"
+  type        = string
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

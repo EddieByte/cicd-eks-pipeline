@@ -1,16 +1,3 @@
-# ── Default VPC + Subnets ─────────────────────────────────────────────────────
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
 # ── IAM Role: EKS Cluster ─────────────────────────────────────────────────────
 
 resource "aws_iam_role" "eks_cluster" {
@@ -43,7 +30,10 @@ resource "aws_eks_cluster" "main" {
   version  = var.kubernetes_version
 
   vpc_config {
-    subnet_ids = data.aws_subnets.default.ids
+    subnet_ids              = var.private_subnet_ids
+    endpoint_private_access = true
+    endpoint_public_access  = true
+    public_access_cidrs     = ["0.0.0.0/0"]
   }
 
   depends_on = [
@@ -107,7 +97,7 @@ resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.cluster_name}-node-group"
   node_role_arn   = aws_iam_role.eks_nodes.arn
-  subnet_ids      = data.aws_subnets.default.ids
+  subnet_ids      = var.private_subnet_ids
   instance_types  = [var.instance_type]
 
   scaling_config {

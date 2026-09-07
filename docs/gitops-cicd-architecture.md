@@ -1,7 +1,7 @@
-# GitOps + CI/CD Architecture for DevPulse
+# GitOps + CI/CD Architecture for eddie-register-app
 
 ## Overview
-This document captures the key architectural decisions, operational patterns, and lessons learned from implementing a GitOps-powered DevOps platform for DevPulse. It is intended to complement the existing notes in `eks-gitops.md`, `jenkins-setup-notes.md`, and `sonarqube-postgres.md`.
+This document captures the key architectural decisions, operational patterns, and lessons learned from implementing a GitOps-powered DevOps platform for eddie-register-app. It is intended to complement the existing notes in `eks-gitops.md`, `jenkins-setup-notes.md`, and `sonarqube-postgres.md`.
 
 > Git is the single source of truth. Infrastructure is managed as code, and deployment is controlled through versioned manifests.
 
@@ -9,8 +9,8 @@ This document captures the key architectural decisions, operational patterns, an
 
 ### Dual-Repository Separation
 A strict two-repository model was adopted:
-- **Application repository (DevPulse)**: Holds Java backend and React frontend source code.
-- **Manifest repository (DevPulse-Manifests)**: Holds Kubernetes desired-state manifests and GitOps configuration.
+- **Application repository (eddie-register-app)**: Holds Java backend and React frontend source code.
+- **Manifest repository (eddie-register-app-manifests)**: Holds Kubernetes desired-state manifests and GitOps configuration.
 
 This separation enforces a clean boundary between application logic and deployment infrastructure. It also supports:
 - independent CI and CD workflows

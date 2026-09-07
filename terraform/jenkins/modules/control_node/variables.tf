@@ -38,6 +38,16 @@ variable "github_repo" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VPC ID for the Ansible control node"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for the Ansible control node"
+  type        = string
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

@@ -38,6 +38,16 @@ variable "sonar_db_password_ssm" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VPC ID for SonarQube"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for SonarQube"
+  type        = string
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

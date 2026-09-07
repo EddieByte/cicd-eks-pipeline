@@ -1,16 +1,3 @@
-# ── Default VPC + Subnet ──────────────────────────────────────────────────────
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
 # ── IAM Role ──────────────────────────────────────────────────────────────────
 
 resource "aws_iam_role" "control_node" {
@@ -59,7 +46,7 @@ resource "aws_iam_instance_profile" "control_node" {
 resource "aws_security_group" "control_node" {
   name        = "ansible-control-node-sg"
   description = "Ansible Control Node: SSH access only"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "SSH"
@@ -84,7 +71,7 @@ resource "aws_security_group" "control_node" {
 resource "aws_instance" "control_node" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
-  subnet_id                   = data.aws_subnets.default.ids[0]
+  subnet_id                   = var.subnet_id
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.control_node.id]
   associate_public_ip_address = true

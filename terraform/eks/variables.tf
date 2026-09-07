@@ -12,7 +12,7 @@ variable "ami_id" {
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
-  default     = "devpulse-eks"
+  default     = "eddie-register-app-eks"
 }
 
 variable "kubernetes_version" {
@@ -73,7 +73,7 @@ variable "tags" {
   description = "Common tags applied to all resources"
   type        = map(string)
   default = {
-    Project     = "DevPulse"
+    Project     = "eddie-register-app"
     Environment = "Prod"
     ManagedBy   = "Terraform"
   }

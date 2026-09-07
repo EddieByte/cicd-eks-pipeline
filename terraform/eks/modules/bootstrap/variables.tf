@@ -33,6 +33,16 @@ variable "ssm_ssh_key_path" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "VPC ID for the bootstrap instance"
+  type        = string
+}
+
+variable "public_subnet_ids" {
+  description = "Public subnet IDs for the bootstrap instance"
+  type        = list(string)
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)
