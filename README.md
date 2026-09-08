@@ -104,7 +104,7 @@ Terraform creates the control node and installs Ansible automatically. After Ter
 ```bash
 ssh -i ~/.ssh/labs_kp.pem ubuntu@<control_node_public_ip>
 cd /home/ubuntu/cicd-eks-pipeline/ansible
-ansible-galaxy collection install -r requirements.yml
+ansible-galaxy collection install -r /home/ubuntu/cicd-eks-pipeline/ansible/requirements.yml
 ansible-playbook playbooks/site.yml
 ```
 
