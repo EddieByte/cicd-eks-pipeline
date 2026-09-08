@@ -43,6 +43,7 @@ aws ssm put-parameter --name "$SONAR_DB_PASSWORD_PARAMETER" \
 ```
 
 5. Code pushed to your Git repository (the control node clones it at boot)
+6. The AWS key pair named by `key_name` must exist in the selected region and match the private key stored in `ssm_ssh_key_path`.
 
 ---
 
@@ -73,10 +74,10 @@ Step 4 — Ansible Control Node EC2 created (depends on master, agent, sonarqube
   - Pulls the configured private key from SSM and places it at the configured SSH path
   - Clones the configured Git repository into the configured repository directory
 
-Step 5 — Ansible inventory generated (hosts.ini)
-  - Terraform writes public IPs of all instances into
-    ansible/inventory/hosts.ini
-    (file is gitignored — generated fresh on every apply)
+Step 5 — Ansible control node bootstrapped
+  - The control node clones this repository
+  - The AWS EC2 dynamic inventory discovers running instances by Project tag
+  - The control node receives the private key from SSM at ~/.ssh/labs_kp.pem
 ```
 
 ---
@@ -96,35 +97,57 @@ Step 5 — Ansible inventory generated (hosts.ini)
 
 ---
 
-### Post-Deploy Manual Steps
+### Run Ansible From The Control Node
 
-**Step 1 — Bootstrap Jenkins Master (run once from control node):**
-
-Before accessing the Jenkins UI, run the master playbook from the control node to install Jenkins:
+Terraform creates the control node and installs Ansible automatically. After Terraform finishes, use the output command or:
 
 ```bash
-ssh -i <path-to-private-key> <linux-user>@<control_node_public_ip>
-cd <repository-directory>/ansible
-ansible-playbook -i inventory/hosts.ini \
-  --private-key <path-to-private-key> \
-  -e @group_vars/all.yml \
-  playbooks/master.yml
+ssh -i ~/.ssh/labs_kp.pem ubuntu@<control_node_public_ip>
+cd /home/ubuntu/cicd-eks-pipeline/ansible
+ansible-galaxy collection install -r requirements.yml
+ansible-playbook playbooks/site.yml
 ```
 
-**Step 2 — Unlock Jenkins:**
-1. Open `jenkins_url` in browser
-2. Unlock Jenkins using the initial admin password:
-   ```bash
-    ssh -i <path-to-private-key> <linux-user>@<jenkins_master_public_ip>
-   sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-   ```
-3. Install suggested plugins
-4. Register the agent node — `Dashboard → Manage Jenkins → Nodes → New Node`
-   - Use `jenkins_agent_private_ip` as the host
-   - Add the master private key to credentials:
-     ```bash
-     sudo cat /var/lib/jenkins/.ssh/id_rsa
-     ```
+`site.yml` runs these stages in order:
+
+1. `master.yml` installs Jenkins and creates the master-to-agent SSH key.
+2. `sonarqube.yml` configures SonarQube and PostgreSQL.
+3. `agent.yml` installs Docker and authorizes the Jenkins master key.
+4. `summary.yml` verifies the master-agent connection and writes `summary.yml` and `summary.md` at the repository root.
+
+The run is safe to repeat. Existing services and configuration are brought to the declared state. If Jenkins has already completed initial setup, the one-time password file will be absent; the summary records that fact and provides the command that works during first-run setup.
+
+View the generated reports:
+
+```bash
+cd /home/ubuntu/cicd-eks-pipeline
+less summary.md
+less summary.yml
+```
+
+For a preflight check that makes no changes:
+
+```bash
+cd /home/ubuntu/cicd-eks-pipeline/ansible
+ansible-playbook --syntax-check playbooks/site.yml
+ansible all -m ping
+```
+
+To refresh the control node checkout before running again:
+
+```bash
+cd /home/ubuntu/cicd-eks-pipeline
+git pull --ff-only origin main
+cd ansible
+ansible-playbook playbooks/site.yml
+```
+
+**Jenkins first-run login:**
+1. Open the `jenkins_url` output in a browser.
+2. During first setup, run `sudo cat /var/lib/jenkins/secrets/initialAdminPassword` on the Jenkins master.
+3. Install suggested plugins and create the permanent administrator credentials.
+4. After setup, the initial password file may no longer exist. Use the permanent credentials instead.
+5. The generated summary confirms whether the master-agent SSH connection is working.
 
 **Step 3 — Create the Infrastructure Configuration Pipeline:**
 1. `Dashboard → New Item → Pipeline → Name: infrastructure-config`

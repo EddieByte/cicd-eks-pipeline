@@ -11,6 +11,7 @@
     jenkins_agent_private_host: "{{ hostvars[jenkins_agent].private_ip_address }}"
     summary_aws_region: "{{ hostvars[jenkins_master].ec2_region | default('us-east-1') }}"
     summary_path: "{{ playbook_dir }}/../../summary.yml"
+    summary_markdown_path: "{{ playbook_dir }}/../../summary.md"
 
   tasks:
     - name: Check for Jenkins initial administrator password
@@ -83,3 +84,45 @@
             - Open the Jenkins URL and sign in with the initial administrator credentials.
             - Rotate the initial administrator password during Jenkins setup.
             - Configure the agent using the jenkins user and the generated master SSH key.
+
+    - name: Write human-readable Jenkins access summary
+      copy:
+        dest: "{{ summary_markdown_path }}"
+        mode: '0600'
+        content: |
+          # Jenkins Access Summary
+
+          Generated: `{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}`
+          AWS region: `{{ summary_aws_region }}`
+
+          ## Access
+
+          | Item | Value |
+          | --- | --- |
+          | Jenkins URL | [http://{{ jenkins_master_host }}:8080](http://{{ jenkins_master_host }}:8080) |
+          | Jenkins master SSH | `ssh -i ~/.ssh/labs_kp.pem ubuntu@{{ jenkins_master_host }}` |
+          | Jenkins agent SSH | `ssh -i ~/.ssh/labs_kp.pem ubuntu@{{ jenkins_agent_host }}` |
+          | SSH key | `~/.ssh/labs_kp.pem` |
+          | SSH user | `ubuntu` |
+
+          ## Jenkins Master-Agent Setup
+
+          | Item | Value |
+          | --- | --- |
+          | Jenkins service | `jenkins` |
+          | Agent host | `{{ jenkins_agent_host }}` |
+          | Agent private IP | `{{ jenkins_agent_private_host }}` |
+          | Agent SSH user | `jenkins` |
+          | Master-agent SSH key | `/var/lib/jenkins/.ssh/id_ed25519` |
+          | Connection status | `{{ 'ok' if (agent_connection.rc | default(1) | int) == 0 else 'failed' }}` |
+          | Agent hostname | `{{ agent_connection.stdout | trim if (agent_connection.rc | default(1) | int) == 0 else 'unavailable' }}` |
+
+          ## Jenkins Login
+
+          | Item | Value |
+          | --- | --- |
+          | Username | `admin` |
+          | Initial password | `{{ jenkins_initial_password.content | b64decode | trim if initial_password_file.stat.exists else 'unavailable - setup already completed' }}` |
+          | Password command | `ssh -i ~/.ssh/labs_kp.pem ubuntu@{{ jenkins_master_host }} "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"` |
+
+          The initial password file is one-time setup data. If it is missing, use the existing Jenkins credentials or reset the password through Jenkins administration.
