@@ -1,0 +1,66 @@
+---
+- name: Build Jenkins access summary
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    jenkins_master: "{{ groups['Jenkins_Master'][0] }}"
+    jenkins_agent: "{{ groups['Jenkins_Agent'][0] }}"
+    jenkins_master_host: "{{ hostvars[jenkins_master].ansible_host }}"
+    jenkins_agent_host: "{{ hostvars[jenkins_agent].ansible_host }}"
+    summary_path: "{{ playbook_dir }}/../../summary.yml"
+
+  tasks:
+    - name: Read Jenkins initial administrator password
+      slurp:
+        src: /var/lib/jenkins/secrets/initialAdminPassword
+      delegate_to: "{{ jenkins_master }}"
+      become: true
+      register: jenkins_initial_password
+      no_log: true
+
+    - name: Verify Jenkins master can connect to the agent
+      command: >-
+        sudo -u jenkins ssh
+        -o BatchMode=yes
+        -o StrictHostKeyChecking=no
+        -o ConnectTimeout=10
+        jenkins@{{ jenkins_agent_host }} hostname
+      delegate_to: "{{ jenkins_master }}"
+      register: agent_connection
+      changed_when: false
+      failed_when: false
+
+    - name: Write Jenkins access summary
+      copy:
+        dest: "{{ summary_path }}"
+        mode: '0600'
+        content: |
+          generated_at: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+          aws_region: "{{ aws_region }}"
+          ssh:
+            private_key: "~/.ssh/labs_kp.pem"
+            username: ubuntu
+            master: "ssh -i ~/.ssh/labs_kp.pem ubuntu@{{ jenkins_master_host }}"
+            agent: "ssh -i ~/.ssh/labs_kp.pem ubuntu@{{ jenkins_agent_host }}"
+          jenkins:
+            master_host: "{{ jenkins_master_host }}"
+            url: "http://{{ jenkins_master_host }}:8080"
+            initial_admin_username: admin
+            initial_admin_password: "{{ jenkins_initial_password.content | b64decode | trim }}"
+            service: jenkins
+            master_agent_ssh_user: jenkins
+            master_agent_ssh_key: /var/lib/jenkins/.ssh/id_ed25519
+            agent_connection:
+              status: "{{ 'ok' if agent_connection.rc == 0 else 'failed' }}"
+              hostname: "{{ agent_connection.stdout | trim if agent_connection.rc == 0 else '' }}"
+          agent:
+            host: "{{ jenkins_agent_host }}"
+            private_ip: "{{ hostvars[jenkins_agent].private_ip_address | default('unknown') }}"
+            ssh_user: jenkins
+            ssh_home: /home/jenkins
+            docker_available: true
+          next_steps:
+            - Open the Jenkins URL and sign in with the initial administrator credentials.
+            - Rotate the initial administrator password during Jenkins setup.
+            - Configure the agent using the jenkins user and the generated master SSH key.

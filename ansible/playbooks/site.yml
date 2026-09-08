@@ -4,3 +4,5 @@
 - import_playbook: sonarqube.yml
 
 - import_playbook: agent.yml  # always last
+
+- import_playbook: summary.yml
