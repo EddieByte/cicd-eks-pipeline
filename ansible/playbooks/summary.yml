@@ -8,9 +8,18 @@
     jenkins_agent: "{{ groups['Jenkins_Agent'][0] }}"
     jenkins_master_host: "{{ hostvars[jenkins_master].ansible_host }}"
     jenkins_agent_host: "{{ hostvars[jenkins_agent].ansible_host }}"
+    jenkins_agent_private_host: "{{ hostvars[jenkins_agent].private_ip_address }}"
+    summary_aws_region: "{{ hostvars[jenkins_master].ec2_region | default('us-east-1') }}"
     summary_path: "{{ playbook_dir }}/../../summary.yml"
 
   tasks:
+    - name: Check for Jenkins initial administrator password
+      stat:
+        path: /var/lib/jenkins/secrets/initialAdminPassword
+      delegate_to: "{{ jenkins_master }}"
+      become: true
+      register: initial_password_file
+
     - name: Read Jenkins initial administrator password
       slurp:
         src: /var/lib/jenkins/secrets/initialAdminPassword
@@ -18,14 +27,20 @@
       become: true
       register: jenkins_initial_password
       no_log: true
+      when: initial_password_file.stat.exists
 
     - name: Verify Jenkins master can connect to the agent
-      command: >-
-        sudo -u jenkins ssh
+      shell: >-
+        ssh -i /home/ubuntu/.ssh/labs_kp.pem
         -o BatchMode=yes
         -o StrictHostKeyChecking=no
         -o ConnectTimeout=10
-        jenkins@{{ jenkins_agent_host }} hostname
+        ubuntu@{{ jenkins_master_host }}
+        sudo -u jenkins -- /usr/bin/ssh
+        -o BatchMode=yes
+        -o StrictHostKeyChecking=no
+        -o ConnectTimeout=10
+        jenkins@{{ jenkins_agent_private_host }} hostname
       delegate_to: "{{ jenkins_master }}"
       register: agent_connection
       changed_when: false
@@ -37,7 +52,7 @@
         mode: '0600'
         content: |
           generated_at: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
-          aws_region: "{{ aws_region }}"
+          aws_region: "{{ summary_aws_region }}"
           ssh:
             private_key: "~/.ssh/labs_kp.pem"
             username: ubuntu
@@ -47,16 +62,20 @@
             master_host: "{{ jenkins_master_host }}"
             url: "http://{{ jenkins_master_host }}:8080"
             initial_admin_username: admin
-            initial_admin_password: "{{ jenkins_initial_password.content | b64decode | trim }}"
+            initial_admin_password: >-
+              {{ jenkins_initial_password.content | b64decode | trim
+                 if initial_password_file.stat.exists
+                 else 'unavailable - Jenkins has already completed initial setup' }}
+            initial_admin_password_command: "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"
             service: jenkins
             master_agent_ssh_user: jenkins
             master_agent_ssh_key: /var/lib/jenkins/.ssh/id_ed25519
             agent_connection:
-              status: "{{ 'ok' if agent_connection.rc == 0 else 'failed' }}"
-              hostname: "{{ agent_connection.stdout | trim if agent_connection.rc == 0 else '' }}"
+              status: "{{ 'ok' if (agent_connection.rc | default(1) | int) == 0 else 'failed' }}"
+              hostname: "{{ agent_connection.stdout | trim if (agent_connection.rc | default(1) | int) == 0 else '' }}"
           agent:
             host: "{{ jenkins_agent_host }}"
-            private_ip: "{{ hostvars[jenkins_agent].private_ip_address | default('unknown') }}"
+            private_ip: "{{ jenkins_agent_private_host }}"
             ssh_user: jenkins
             ssh_home: /home/jenkins
             docker_available: true
