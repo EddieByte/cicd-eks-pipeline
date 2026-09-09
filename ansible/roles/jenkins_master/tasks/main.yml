@@ -24,6 +24,14 @@
     state: present
     update_cache: yes
 
+- name: Create Jenkins configuration directory
+  file:
+    path: /etc/jenkins
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Copy the plugin manifest to the Jenkins host
   copy:
     src: plugins.txt
