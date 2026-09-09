@@ -4,11 +4,12 @@
   become: true
   vars:
     ssm_parameter_name: "/jenkins/master-public-key"
+    # Manual-first mode installs Jenkins and prepares SSH trust without taking
+    # ownership of plugins, credentials, jobs, or UI configuration.
+    jenkins_manage_configuration: false
     # These are SSM parameter names only; secret values remain outside Git.
     jenkins_ssh_private_key_ssm: "/jenkins/ssh-private-key"
     jenkins_github_username_ssm: "/jenkins/github-username"
-    jenkins_github_token_ssm: "/jenkins/github-token"
-    jenkins_sonarqube_token_ssm: "/jenkins/sonarqube-token"
     # Discover the service endpoints from the EC2 dynamic inventory.
     jenkins_agent_private_ip: "{{ hostvars[groups['Jenkins_Agent'][0]].private_ip_address }}"
     control_node_private_ip: "{{ hostvars[groups['Ansible_Control_Node'][0]].private_ip_address }}"

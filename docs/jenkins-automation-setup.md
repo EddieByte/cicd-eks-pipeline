@@ -2,6 +2,8 @@
 
 This is the first reusable Jenkins automation pass for this repository.
 
+The current default is **manual-first mode**. The Ansible master play installs Jenkins and prepares master-to-agent SSH trust, but it does not install the plugin manifest, load JCasC, retrieve GitHub credentials, or create Jenkins jobs. This allows the first cloud deployment to be configured and verified manually before exporting a known-good configuration.
+
 The design separates responsibilities:
 
 ```text
@@ -23,6 +25,40 @@ The Jenkins master role now manages:
 - The EC2 private key used by the infrastructure pipeline.
 - A protected environment file containing secret values retrieved from SSM.
 - A systemd override that enables JCasC at Jenkins startup.
+
+Those configuration tasks are enabled only when `jenkins_manage_configuration: true` is set in `ansible/playbooks/master.yml`.
+
+## Manual-First Deployment
+
+Run the normal site playbook without creating the GitHub or SonarQube token parameters for JCasC:
+
+```bash
+ansible-playbook --syntax-check playbooks/site.yml
+ansible all -m ping
+ansible-playbook playbooks/site.yml
+```
+
+In this mode, manually complete the Jenkins UI setup, install and verify plugins, configure tools, connect the agent, configure SonarQube, add credentials, and run a successful application pipeline. Then export and sanitize Jenkins Configuration as Code.
+
+Do not rerun `ansible/playbooks/master.yml` with configuration management enabled against that manually configured instance until the exported configuration has been reviewed. JCasC is intentionally declarative and may reconcile or replace UI-managed settings.
+
+## Enable Configuration Automation Later
+
+After the manual configuration has been proven and the JCasC export has been reviewed, change this variable in `ansible/playbooks/master.yml`:
+
+```yaml
+jenkins_manage_configuration: true
+```
+
+Before running the playbook in this mode, create the required SSM parameters:
+
+```text
+/jenkins/ssh-private-key
+/jenkins/github-username
+/jenkins/github-token
+```
+
+The `/jenkins/sonarqube-token` parameter remains optional during the first automation pass because SonarQube is provisioned by the same infrastructure workflow. Add it after generating the token in SonarQube, then rerun `ansible-playbook playbooks/master.yml`.
 
 The automation discovers the Jenkins agent private IP and SonarQube URL from the EC2 dynamic inventory. They are not hardcoded in the JCasC file.
 

@@ -4,8 +4,7 @@ This repository captures the implementation notes and operational lessons from b
 
 ## Key Docs
 
-- `docs/jenkins-credentials-reference.md` — Jenkins credential IDs and system configuration names to use during rebuilds.
-- `docs/jenkins-automation-setup.md` — reusable Ansible/JCasC setup and secure SSM credential flow for Jenkins.
+- `docker/jenkins-local/README.md` — local Docker smoke test for Jenkins plugins and JCasC before cloud deployment.
 - `docs/argocd-bootstrap-server.md` — Argo CD setup from the local workstation or EKS bootstrap server, with the rationale for each path.
 - `docs/argocd-next-steps.md` — steps after EKS and Argo CD are running, including repository connection and Application setup.
 - `scripts/bootstrap-argocd.ps1` — post-Terraform EKS bootstrap, Argo CD installation, password retrieval, and local login URL.

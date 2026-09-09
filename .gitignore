@@ -20,4 +20,6 @@ Thumbs.db
 # Local deployment guide may contain environment-specific values
 docs/deployment-guide.md
 jenkins-credentials-reference.md
+ # Local Docker Jenkins secrets and runtime files
+ docker/jenkins-local/.env
 argocd-next-steps.md

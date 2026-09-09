@@ -1,0 +1,21 @@
+services:
+  jenkins:
+    # Build the image from the repository root so it can copy the shared plugin manifest.
+    build:
+      context: ../..
+      dockerfile: docker/jenkins-local/Dockerfile
+    container_name: jenkins-local
+    restart: unless-stopped
+    ports:
+      # Jenkins UI and agent protocol ports for local smoke testing.
+      - "8080:8080"
+      - "50000:50000"
+    env_file:
+      # Copy .env.example to .env and use throwaway local test values.
+      - .env
+    volumes:
+      # Keep the Jenkins home between restarts; remove it for a clean rebuild.
+      - jenkins_home:/var/jenkins_home
+
+volumes:
+  jenkins_home:

@@ -1,0 +1,30 @@
+# Local-only JCasC configuration.
+# It intentionally omits the cloud SSH agent because Docker cannot validate EC2 networking.
+jenkins:
+  # Keep the controller available for local smoke tests.
+  numExecutors: 2
+  systemMessage: "Local Jenkins smoke test - not a production controller"
+
+unclassified:
+  # The URL is supplied through the local .env file, never hardcoded here.
+  sonarGlobalConfiguration:
+    installations:
+      - name: "sonarqube-server"
+        serverUrl: "${SONARQUBE_URL:-http://host.docker.internal:9000}"
+        credentialsId: "sonarqube-token"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # Local-only test credential. Use a throwaway token, never a production secret.
+          - string:
+              id: "sonarqube-token"
+              secret: "${SONARQUBE_TOKEN}"
+              description: "Local SonarQube smoke-test token"
+          # Local-only Git credential for testing checkout configuration.
+          - usernamePassword:
+              id: "github"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "Local Git checkout smoke-test credential"
