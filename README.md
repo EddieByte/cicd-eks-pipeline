@@ -4,11 +4,42 @@ This repository captures the implementation notes and operational lessons from b
 
 ## Key Docs
 
+- `docs/jenkins-credentials-reference.md` — Jenkins credential IDs and system configuration names to use during rebuilds.
+- `docs/jenkins-automation-setup.md` — reusable Ansible/JCasC setup and secure SSM credential flow for Jenkins.
+- `docs/argocd-bootstrap-server.md` — Argo CD setup from the local workstation or EKS bootstrap server, with the rationale for each path.
+- `docs/argocd-next-steps.md` — steps after EKS and Argo CD are running, including repository connection and Application setup.
+- `scripts/bootstrap-argocd.ps1` — post-Terraform EKS bootstrap, Argo CD installation, password retrieval, and local login URL.
 - `docs/gitops-cicd-architecture.md` — architecture, GitOps philosophy, CI/CD flow, and lifecycle guidance.
 - `docs/eks-gitops.md` — EKS deployment troubleshooting and cluster issues.
 - `docs/jenkins-setup-notes.md` — Jenkins installation, pipeline behavior, and security integration.
 - `docs/sonarqube-postgres.md` — SonarQube + PostgreSQL deployment notes and recovery steps.
 - `docs/terraform-ansible-setup-notes.md` — Terraform IaC and Ansible configuration management setup, issues, and architecture decisions.
+
+### Post-Terraform EKS Bootstrap
+
+After `terraform apply` completes in `terraform/eks`, run the reusable bootstrap script from the repository root:
+
+```powershell
+.\scripts\bootstrap-argocd.ps1
+```
+
+The script reads the cluster name from Terraform output, uses the AWS CLI configured region, waits for Ready nodes, installs the pinned Argo CD version, waits for Argo CD readiness, retrieves the temporary admin password to the clipboard, starts local port-forwarding, and opens the login page.
+
+Useful overrides:
+
+```powershell
+.\scripts\bootstrap-argocd.ps1 `
+  -TerraformDirectory .\terraform\eks `
+  -Region us-east-1 `
+  -ArgoCdVersion v3.5.2 `
+  -LocalPort 8081
+```
+
+The script does not run Terraform, store credentials, or expose Argo CD publicly. Stop the local port-forward when finished:
+
+```powershell
+Stop-Process -Id <port-forward-process-id>
+```
 
 ---
 

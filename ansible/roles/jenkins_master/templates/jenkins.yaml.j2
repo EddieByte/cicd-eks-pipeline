@@ -1,0 +1,111 @@
+# This file is rendered by Ansible and consumed by Jenkins Configuration as Code.
+# Credential IDs are safe to keep here; the referenced secret values are loaded from
+# /etc/jenkins/jcas.env and are never stored in this repository.
+jenkins:
+  # Keep the controller available for orchestration and run builds on the agent.
+  numExecutors: 0
+  systemMessage: "Managed by Ansible and Jenkins Configuration as Code"
+
+  # Define the Linux build agent instead of configuring it manually in the UI.
+  nodes:
+    - permanent:
+        name: "Jenkins-Agent"
+        remoteFS: "/home/jenkins"
+        labelString: "Jenkins-Agent"
+        mode: NORMAL
+        retentionStrategy: "always"
+        launcher:
+          ssh:
+            host: "{{ jenkins_agent_private_ip }}"
+            port: 22
+            credentialsId: "jenkins-agent-ssh"
+            # The lab currently disables host-key verification in Ansible.
+            sshHostKeyVerificationStrategy:
+              nonVerifyingKeyVerificationStrategy: {}
+
+  # Declare the global tools referenced by application Jenkinsfiles.
+  # Maven is installed automatically by Jenkins from this version identifier.
+  tool:
+    jdk:
+      installations:
+        - name: "Java21"
+          home: "/usr/lib/jvm/java-21-openjdk-amd64"
+    maven:
+      installations:
+        - name: "Maven3"
+          properties:
+            - installSource:
+                installers:
+                  - maven:
+                      id: "3.9.9"
+
+# Configure the SonarQube server name used by withSonarQubeEnv().
+unclassified:
+  sonarGlobalConfiguration:
+    installations:
+      - name: "sonarqube-server"
+        serverUrl: "{{ sonarqube_url }}"
+{% if jenkins_sonarqube_token_available | default(false) %}
+        credentialsId: "sonarqube-token"
+{% endif %}
+
+# Declare stable IDs while resolving the secret values from the protected env file.
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # SSH key used by Jenkins to launch the jenkins user on the agent.
+          - basicSSHUserPrivateKey:
+              id: "jenkins-agent-ssh"
+              username: "jenkins"
+              description: "Jenkins master to agent SSH key"
+              privateKeySource:
+                fileOnMaster:
+                  path: "/var/lib/jenkins/.ssh/id_ed25519"
+          # EC2 key used by the infrastructure-config job to reach the control node.
+          - basicSSHUserPrivateKey:
+              id: "labs-kp"
+              username: "ubuntu"
+              description: "EC2 key for the Ansible control node"
+              privateKeySource:
+                fileOnMaster:
+                  path: "/var/lib/jenkins/.ssh/labs_kp.pem"
+          # GitHub credentials are read from environment variables injected at startup.
+          - usernamePassword:
+              id: "github"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub checkout credentials"
+      {% if jenkins_sonarqube_token_available | default(false) %}
+            # SonarQube analysis token is loaded from the protected environment file.
+          - string:
+              id: "sonarqube-token"
+              secret: "${SONARQUBE_TOKEN}"
+              description: "SonarQube analysis token"
+      {% endif %}
+
+# Create the infrastructure job from the repository's Jenkinsfile.
+# The job definition is declarative; rerunning Ansible updates it instead of duplicating it.
+jobs:
+  - script: |
+      pipelineJob('infrastructure-config') {
+        description('Managed by JCasC; configures the Jenkins platform with Ansible.')
+        parameters {
+          stringParam('CONTROL_NODE_IP', '{{ control_node_private_ip }}', 'Private IP of the Ansible control node')
+          stringParam('SSH_CREDENTIAL_ID', 'labs-kp', 'SSH credential used to reach the control node')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/EddieByte/cicd-eks-pipeline')
+                  credentials('github')
+                }
+                branch('*/main')
+              }
+              scriptPath('jenkins/infrastructure-config/Jenkinsfile')
+            }
+          }
+        }
+      }

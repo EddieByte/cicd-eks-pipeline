@@ -1,0 +1,5 @@
+[Service]
+# Point Jenkins Configuration as Code at the rendered declarative configuration.
+Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs/jenkins.yaml"
+# Load secret values fetched by Ansible from SSM Parameter Store.
+EnvironmentFile=/etc/jenkins/jcas.env

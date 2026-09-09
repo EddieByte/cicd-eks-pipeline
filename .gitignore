@@ -19,3 +19,5 @@ Thumbs.db
 
 # Local deployment guide may contain environment-specific values
 docs/deployment-guide.md
+jenkins-credentials-reference.md
+argocd-next-steps.md

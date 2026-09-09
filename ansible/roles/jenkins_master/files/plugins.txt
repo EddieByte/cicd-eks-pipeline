@@ -1,0 +1,23 @@
+# Jenkins Configuration as Code provides declarative Jenkins configuration.
+# This first-run manifest uses compatible versions; pin tested versions after the smoke test.
+configuration-as-code
+# Credentials plugins provide the credential types referenced by jenkins.yaml.
+credentials
+credentials-binding
+# Git and Pipeline plugins run Jenkinsfiles from source control.
+git
+git-client
+workflow-aggregator
+workflow-job
+workflow-cps
+# SSH build agents lets Jenkins launch the Linux agent over SSH.
+ssh-build-agents
+# SonarQube integration injects the configured server environment.
+sonar
+# Docker Pipeline support is required by application container pipelines.
+docker-workflow
+docker-plugin
+# Job DSL is used for optional pipeline-job definitions.
+job-dsl
+# Security scanning integration documented by this repository.
+dependency-check-jenkins-plugin

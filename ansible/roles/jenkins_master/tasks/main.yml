@@ -24,13 +24,42 @@
     state: present
     update_cache: yes
 
-- name: Enable and start Jenkins
-  systemd:
-    name: jenkins
-    enabled: yes
-    state: started
+- name: Copy the plugin manifest to the Jenkins host
+  copy:
+    src: plugins.txt
+    dest: /etc/jenkins/plugins.txt
+    owner: root
+    group: root
+    mode: '0644'
 
-- name: Create Jenkins .ssh directory
+- name: Install the declared Jenkins plugin set
+  command: jenkins-plugin-cli --plugin-file /etc/jenkins/plugins.txt
+  register: jenkins_plugin_install
+  changed_when: "'Downloaded' in jenkins_plugin_install.stdout or 'Installed' in jenkins_plugin_install.stdout"
+
+- name: Create the JCasC configuration directory
+  file:
+    path: /var/lib/jenkins/casc_configs
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0750'
+
+- name: Create the Jenkins systemd override directory
+  file:
+    path: /etc/systemd/system/jenkins.service.d
+    state: directory
+    mode: '0755'
+
+- name: Configure Jenkins Configuration as Code at service startup
+  template:
+    src: jenkins.service.d.j2
+    dest: /etc/systemd/system/jenkins.service.d/jcas.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create the Jenkins master SSH directory
   file:
     path: /var/lib/jenkins/.ssh
     state: directory
@@ -38,7 +67,7 @@
     group: jenkins
     mode: '0700'
 
-- name: Generate SSH keypair for master→agent communication
+- name: Generate SSH keypair for master-to-agent communication
   openssh_keypair:
     path: /var/lib/jenkins/.ssh/id_ed25519
     type: ed25519
@@ -46,6 +75,114 @@
     owner: jenkins
     group: jenkins
   register: ssh_keypair
+
+- name: Retrieve the EC2 private key for the infrastructure pipeline
+  command: >-
+    aws ssm get-parameter
+    --name {{ jenkins_ssh_private_key_ssm | quote }}
+    --with-decryption
+    --query Parameter.Value
+    --output text
+    --region {{ aws_region | quote }}
+  register: jenkins_ssh_private_key
+  changed_when: false
+  no_log: true
+
+- name: Install the EC2 private key as a Jenkins credential source file
+  copy:
+    content: "{{ jenkins_ssh_private_key.stdout }}\n"
+    dest: /var/lib/jenkins/.ssh/labs_kp.pem
+    owner: jenkins
+    group: jenkins
+    mode: '0600'
+  no_log: true
+
+- name: Verify required Jenkins SSM parameter names exist
+  command: >-
+    aws ssm get-parameter
+    --name {{ item | quote }}
+    --query Parameter.Name
+    --output text
+    --region {{ aws_region | quote }}
+  loop:
+    - "{{ jenkins_github_username_ssm }}"
+    - "{{ jenkins_github_token_ssm }}"
+  changed_when: false
+
+- name: Check whether the optional SonarQube token exists
+  command: >-
+    aws ssm get-parameter
+    --name {{ jenkins_sonarqube_token_ssm | quote }}
+    --query Parameter.Name
+    --output text
+    --region {{ aws_region | quote }}
+  register: jenkins_sonarqube_token_check
+  changed_when: false
+  failed_when: false
+
+- name: Retrieve Jenkins secret values from SSM Parameter Store
+  command: >-
+    aws ssm get-parameter
+    --name {{ item.path | quote }}
+    --with-decryption
+    --query Parameter.Value
+    --output text
+    --region {{ aws_region | quote }}
+  loop:
+    - { key: github_username, path: "{{ jenkins_github_username_ssm }}" }
+    - { key: github_token, path: "{{ jenkins_github_token_ssm }}" }
+  register: jenkins_jcas_secret_results
+  changed_when: false
+  no_log: true
+
+- name: Build the JCasC secret-value map without exposing values in output
+  set_fact:
+    jenkins_jcas_values: "{{ dict(jenkins_jcas_secret_results.results | map(attribute='item.key') | zip(jenkins_jcas_secret_results.results | map(attribute='stdout'))) | combine({'sonarqube_token': ''}) }}"
+    jenkins_sonarqube_token_available: "{{ jenkins_sonarqube_token_check.rc | int == 0 }}"
+  no_log: true
+
+- name: Retrieve the optional SonarQube token when it has been created
+  command: >-
+    aws ssm get-parameter
+    --name {{ jenkins_sonarqube_token_ssm | quote }}
+    --with-decryption
+    --query Parameter.Value
+    --output text
+    --region {{ aws_region | quote }}
+  register: jenkins_sonarqube_token
+  changed_when: false
+  no_log: true
+  when: jenkins_sonarqube_token_available
+
+- name: Add the optional SonarQube token to the JCasC secret map
+  set_fact:
+    jenkins_jcas_values: "{{ jenkins_jcas_values | combine({'sonarqube_token': jenkins_sonarqube_token.stdout}) }}"
+  no_log: true
+  when: jenkins_sonarqube_token_available
+
+- name: Render the protected JCasC environment file
+  template:
+    src: jcas.env.j2
+    dest: /etc/jenkins/jcas.env
+    owner: root
+    group: jenkins
+    mode: '0640'
+  no_log: true
+
+- name: Render the declarative Jenkins configuration
+  template:
+    src: jenkins.yaml.j2
+    dest: /var/lib/jenkins/casc_configs/jenkins.yaml
+    owner: jenkins
+    group: jenkins
+    mode: '0640'
+
+- name: Enable and start Jenkins with the declared configuration
+  systemd:
+    name: jenkins
+    enabled: yes
+    state: started
+    daemon_reload: yes
 
 - name: Get IMDSv2 token
   uri:
