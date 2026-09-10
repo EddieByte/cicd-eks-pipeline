@@ -32,6 +32,30 @@
     group: root
     mode: '0755'
 
+- name: Create Jenkins plugin manager directory
+  file:
+    path: /opt/jenkins-plugin-manager
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: jenkins_manage_configuration | bool
+
+- name: Download the Jenkins Plugin Installation Manager
+  get_url:
+    url: "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/{{ jenkins_plugin_manager_version }}/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar"
+    dest: "/opt/jenkins-plugin-manager/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar"
+    owner: root
+    group: root
+    mode: '0644'
+  when: jenkins_manage_configuration | bool
+
+- name: Stop Jenkins before installing plugins
+  systemd:
+    name: jenkins
+    state: stopped
+  when: jenkins_manage_configuration | bool
+
 - name: Copy the plugin manifest to the Jenkins host
   copy:
     src: plugins.txt
@@ -42,9 +66,14 @@
   when: jenkins_manage_configuration | bool
 
 - name: Install the declared Jenkins plugin set
-  command: jenkins-plugin-cli --plugin-file /etc/jenkins/plugins.txt
+  command: >-
+    java -jar
+    /opt/jenkins-plugin-manager/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar
+    --war /usr/share/java/jenkins.war
+    --plugin-file /etc/jenkins/plugins.txt
+    --plugin-download-directory /var/lib/jenkins/plugins
   register: jenkins_plugin_install
-  changed_when: "'Downloaded' in jenkins_plugin_install.stdout or 'Installed' in jenkins_plugin_install.stdout"
+  changed_when: true
   when: jenkins_manage_configuration | bool
 
 - name: Create the JCasC configuration directory
@@ -54,7 +83,6 @@
     owner: jenkins
     group: jenkins
     mode: '0750'
-  when: jenkins_manage_configuration | bool
 
 - name: Create the Jenkins systemd override directory
   file:

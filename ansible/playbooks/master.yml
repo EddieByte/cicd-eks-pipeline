@@ -7,6 +7,8 @@
     # Manual-first mode installs Jenkins and prepares SSH trust without taking
     # ownership of plugins, credentials, jobs, or UI configuration.
     jenkins_manage_configuration: true
+    # The Debian Jenkins package does not ship jenkins-plugin-cli.
+    jenkins_plugin_manager_version: "2.13.2"
     # These are SSM parameter names only; secret values remain outside Git.
     jenkins_ssh_private_key_ssm: "/jenkins/ssh-private-key"
     jenkins_github_username_ssm: "/jenkins/github-username"
