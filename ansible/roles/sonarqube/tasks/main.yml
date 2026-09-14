@@ -168,7 +168,6 @@
     force_basic_auth: yes
     return_content: yes
   register: sonar_webhooks
-  no_log: true
 
 - name: Create Jenkins webhook in SonarQube
   uri:
