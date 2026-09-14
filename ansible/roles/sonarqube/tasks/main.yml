@@ -145,3 +145,41 @@
     enabled: yes
     state: started
     daemon_reload: yes
+
+# ── Webhook ───────────────────────────────────────────────────────────────────
+
+- name: Wait for SonarQube to be ready
+  uri:
+    url: "http://localhost:9000/api/system/status"
+    method: GET
+    status_code: 200
+    return_content: yes
+  register: sonar_status
+  until: sonar_status.json.status == "UP"
+  retries: 30
+  delay: 10
+
+- name: Check if Jenkins webhook already exists in SonarQube
+  uri:
+    url: "http://localhost:9000/api/webhooks/list"
+    method: GET
+    user: admin
+    password: "{{ sonar_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: sonar_webhooks
+  no_log: true
+
+- name: Create Jenkins webhook in SonarQube
+  uri:
+    url: "http://localhost:9000/api/webhooks/create"
+    method: POST
+    user: admin
+    password: "{{ sonar_admin_password }}"
+    force_basic_auth: yes
+    body_format: form-urlencoded
+    body:
+      name: "jenkins"
+      url: "http://{{ jenkins_master_ip }}:8080/sonarqube-webhook/"
+  no_log: true
+  when: sonar_webhooks.json.webhooks | selectattr('name', 'equalto', 'jenkins') | list | length == 0

@@ -104,7 +104,8 @@ credentials:
 jobs:
   - script: |
       pipelineJob('infrastructure-config') {
-        description('Managed by JCasC; configures the Jenkins platform with Ansible.')
+        description('Runs Ansible from the control node to configure Jenkins, SonarQube, and the agent.')
+        // Only manage this specific job — never remove jobs created outside this script.
         parameters {
           stringParam('CONTROL_NODE_IP', '{{ control_node_private_ip }}', 'Private IP of the Ansible control node')
           stringParam('SSH_CREDENTIAL_ID', 'labs-kp', 'SSH credential used to reach the control node')
