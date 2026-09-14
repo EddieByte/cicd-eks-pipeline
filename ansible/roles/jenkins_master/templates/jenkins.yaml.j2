@@ -99,29 +99,6 @@ credentials:
               description: "SonarQube analysis token"
       {% endif %}
 
-# Create the infrastructure job from the repository's Jenkinsfile.
-# The job definition is declarative; rerunning Ansible updates it instead of duplicating it.
-jobs:
-  - script: |
-      pipelineJob('infrastructure-config') {
-        description('Runs Ansible from the control node to configure Jenkins, SonarQube, and the agent.')
-        // Only manage this specific job — never remove jobs created outside this script.
-        parameters {
-          stringParam('CONTROL_NODE_IP', '{{ control_node_private_ip }}', 'Private IP of the Ansible control node')
-          stringParam('SSH_CREDENTIAL_ID', 'labs-kp', 'SSH credential used to reach the control node')
-        }
-        definition {
-          cpsScm {
-            scm {
-              git {
-                remote {
-                  url('https://github.com/EddieByte/cicd-eks-pipeline')
-                  credentials('github')
-                }
-                branch('*/main')
-              }
-              scriptPath('jenkins/infrastructure-config/Jenkinsfile')
-            }
-          }
-        }
-      }
+# No Job DSL jobs are defined here.
+# The infrastructure-config pipeline is managed manually or triggered directly
+# from the control node via ansible-playbook.

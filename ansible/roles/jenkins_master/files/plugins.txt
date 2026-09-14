@@ -17,7 +17,5 @@ sonar
 # Docker Pipeline support is required by application container pipelines.
 docker-workflow
 docker-plugin
-# Job DSL is used for optional pipeline-job definitions.
-job-dsl
 # Security scanning integration documented by this repository.
 dependency-check-jenkins-plugin
