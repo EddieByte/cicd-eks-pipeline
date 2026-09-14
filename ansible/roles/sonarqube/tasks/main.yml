@@ -155,9 +155,10 @@
     status_code: 200
     return_content: yes
   register: sonar_status
-  until: sonar_status.json.status == "UP"
+  until: sonar_status.status == 200 and (sonar_status.json is defined) and sonar_status.json.status == "UP"
   retries: 30
   delay: 10
+  failed_when: false
 
 - name: Fetch SonarQube admin password from SSM
   command: >
