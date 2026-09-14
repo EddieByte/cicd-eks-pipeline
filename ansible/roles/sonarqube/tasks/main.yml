@@ -159,6 +159,23 @@
   retries: 30
   delay: 10
 
+- name: Fetch SonarQube admin password from SSM
+  command: >
+    aws ssm get-parameter
+    --name "{{ sonar_admin_password_ssm }}"
+    --with-decryption
+    --query Parameter.Value
+    --output text
+    --region {{ aws_region }}
+  register: sonar_admin_password_result
+  changed_when: false
+  no_log: true
+
+- name: Set sonar_admin_password fact
+  set_fact:
+    sonar_admin_password: "{{ sonar_admin_password_result.stdout }}"
+  no_log: true
+
 - name: Check if Jenkins webhook already exists in SonarQube
   uri:
     url: "http://localhost:9000/api/webhooks/list"
@@ -168,6 +185,7 @@
     force_basic_auth: yes
     return_content: yes
   register: sonar_webhooks
+  no_log: true
 
 - name: Create Jenkins webhook in SonarQube
   uri:

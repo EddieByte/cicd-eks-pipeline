@@ -7,7 +7,7 @@
     sonar_db_username_ssm: "/sonarqube/db-username"
     sonar_db_password_ssm: "/sonarqube/db-password"
     sonar_db_name: "sonarqube"
-    sonar_admin_password: "{{ lookup('env', 'SONAR_ADMIN_PASSWORD') | default('admin', true) }}"
+    sonar_admin_password_ssm: "/sonarqube/admin-password"
     jenkins_master_ip: "{{ hostvars[groups['Jenkins_Master'][0]].ansible_host }}"
 
   roles:

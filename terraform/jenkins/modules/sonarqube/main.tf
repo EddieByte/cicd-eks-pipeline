@@ -34,6 +34,11 @@ resource "aws_iam_role_policy" "sonarqube_ssm" {
         Effect   = "Allow"
         Action   = ["ssm:PutParameter"]
         Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/jenkins/sonarqube-token"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/sonarqube/admin-password"
       }
     ]
   })
