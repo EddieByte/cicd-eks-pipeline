@@ -1,4 +1,10 @@
 ---
+- name: Ensure Ansible remote tmp directory exists with open permissions
+  file:
+    path: /tmp/.ansible/tmp
+    state: directory
+    mode: '0777'
+
 - name: Update and upgrade packages
   apt:
     update_cache: yes
