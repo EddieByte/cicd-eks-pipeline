@@ -224,6 +224,7 @@
     body_format: form-urlencoded
     body:
       name: "jenkins-token"
+      login: "admin"
   no_log: true
   when: sonar_existing_tokens.json.userTokens | selectattr('name', 'equalto', 'jenkins-token') | list | length > 0
 
