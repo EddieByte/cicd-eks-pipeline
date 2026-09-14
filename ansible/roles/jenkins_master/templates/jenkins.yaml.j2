@@ -60,16 +60,16 @@ credentials:
               username: "jenkins"
               description: "Jenkins master to agent SSH key"
               privateKeySource:
-                fileOnMaster:
-                  path: "/var/lib/jenkins/.ssh/id_ed25519"
+                directEntry:
+                  privateKey: "${AGENT_PRIVATE_KEY}"
           # EC2 key used by the infrastructure-config job to reach the control node.
           - basicSSHUserPrivateKey:
               id: "labs-kp"
               username: "ubuntu"
               description: "EC2 key for the Ansible control node"
               privateKeySource:
-                fileOnMaster:
-                  path: "/var/lib/jenkins/.ssh/labs_kp.pem"
+                directEntry:
+                  privateKey: "${LABS_KP_PRIVATE_KEY}"
           # GitHub credentials are read from environment variables injected at startup.
           - usernamePassword:
               id: "github"

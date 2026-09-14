@@ -185,9 +185,16 @@
   no_log: true
   when: jenkins_manage_configuration | bool
 
+- name: Read the generated agent SSH private key into memory
+  slurp:
+    src: /var/lib/jenkins/.ssh/id_ed25519
+  register: jenkins_agent_private_key_raw
+  no_log: true
+  when: jenkins_manage_configuration | bool
+
 - name: Build the JCasC secret-value map without exposing values in output
   set_fact:
-    jenkins_jcas_values: "{{ dict(jenkins_jcas_secret_results.results | map(attribute='item.key') | zip(jenkins_jcas_secret_results.results | map(attribute='stdout'))) | combine({'sonarqube_token': ''}) }}"
+    jenkins_jcas_values: "{{ dict(jenkins_jcas_secret_results.results | map(attribute='item.key') | zip(jenkins_jcas_secret_results.results | map(attribute='stdout'))) | combine({'sonarqube_token': '', 'agent_private_key': jenkins_agent_private_key_raw.content | b64decode, 'labs_kp_private_key': jenkins_ssh_private_key.stdout}) }}"
     jenkins_sonarqube_token_available: "{{ jenkins_sonarqube_token_check.rc | int == 0 }}"
   no_log: true
   when: jenkins_manage_configuration | bool
