@@ -3,6 +3,9 @@
 
 - import_playbook: sonarqube.yml
 
-- import_playbook: agent.yml  # always last
+- import_playbook: agent.yml
+
+# Second pass on master — injects the SonarQube token generated above into JCasC.
+- import_playbook: master.yml
 
 - import_playbook: summary.yml

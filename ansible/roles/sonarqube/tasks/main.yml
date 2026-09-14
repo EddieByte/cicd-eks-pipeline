@@ -183,3 +183,54 @@
       url: "http://{{ jenkins_master_ip }}:8080/sonarqube-webhook/"
   no_log: true
   when: sonar_webhooks.json.webhooks | selectattr('name', 'equalto', 'jenkins') | list | length == 0
+
+# ── Analysis token ────────────────────────────────────────────────────────────
+
+- name: Check if jenkins-token already exists in SonarQube
+  uri:
+    url: "http://localhost:9000/api/user_tokens/search"
+    method: GET
+    user: admin
+    password: "{{ sonar_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: sonar_existing_tokens
+  no_log: true
+
+- name: Revoke existing jenkins-token if present (tokens cannot be read back)
+  uri:
+    url: "http://localhost:9000/api/user_tokens/revoke"
+    method: POST
+    user: admin
+    password: "{{ sonar_admin_password }}"
+    force_basic_auth: yes
+    body_format: form-urlencoded
+    body:
+      name: "jenkins-token"
+  no_log: true
+  when: sonar_existing_tokens.json.userTokens | selectattr('name', 'equalto', 'jenkins-token') | list | length > 0
+
+- name: Generate new SonarQube analysis token for Jenkins
+  uri:
+    url: "http://localhost:9000/api/user_tokens/generate"
+    method: POST
+    user: admin
+    password: "{{ sonar_admin_password }}"
+    force_basic_auth: yes
+    body_format: form-urlencoded
+    body:
+      name: "jenkins-token"
+      type: "USER_TOKEN"
+    return_content: yes
+  register: sonar_token_response
+  no_log: true
+
+- name: Store SonarQube analysis token in SSM
+  command: >
+    aws ssm put-parameter
+    --name "/jenkins/sonarqube-token"
+    --value "{{ sonar_token_response.json.token }}"
+    --type SecureString
+    --overwrite
+    --region {{ aws_region }}
+  no_log: true
