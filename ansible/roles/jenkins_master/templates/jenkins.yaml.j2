@@ -4,7 +4,6 @@
 jenkins:
   # Keep the controller available for orchestration and run builds on the agent.
   numExecutors: 0
-  systemMessage: "Managed by Ansible and Jenkins Configuration as Code"
 
   # Define the Linux build agent instead of configuring it manually in the UI.
   nodes:
@@ -38,6 +37,14 @@ tool:
               installers:
                 - maven:
                     id: "3.9.9"
+  sonarRunnerInstallation:
+    installations:
+      - name: "SonarQube Scanner"
+        properties:
+          - installSource:
+              installers:
+                - sonarRunnerInstaller:
+                    id: "8.1.0.6389"
 
 # Configure the SonarQube server name used by withSonarQubeEnv().
 unclassified:
