@@ -76,6 +76,12 @@ credentials:
               username: "${GITHUB_USERNAME}"
               password: "${GITHUB_TOKEN}"
               description: "GitHub checkout credentials"
+          # DockerHub credentials for image build and push in the application pipeline.
+          - usernamePassword:
+              id: "dockerhub"
+              username: "${DOCKERHUB_USERNAME}"
+              password: "${DOCKERHUB_TOKEN}"
+              description: "DockerHub credentials for image push"
       {% if jenkins_sonarqube_token_available | default(false) %}
             # SonarQube analysis token is loaded from the protected environment file.
           - string:

@@ -150,6 +150,8 @@
   loop:
     - "{{ jenkins_github_username_ssm }}"
     - "{{ jenkins_github_token_ssm }}"
+    - "{{ jenkins_dockerhub_username_ssm }}"
+    - "{{ jenkins_dockerhub_token_ssm }}"
   changed_when: false
   when: jenkins_manage_configuration | bool
 
@@ -174,8 +176,10 @@
     --output text
     --region {{ aws_region | quote }}
   loop:
-    - { key: github_username, path: "{{ jenkins_github_username_ssm }}" }
-    - { key: github_token, path: "{{ jenkins_github_token_ssm }}" }
+    - { key: github_username,     path: "{{ jenkins_github_username_ssm }}" }
+    - { key: github_token,        path: "{{ jenkins_github_token_ssm }}" }
+    - { key: dockerhub_username,  path: "{{ jenkins_dockerhub_username_ssm }}" }
+    - { key: dockerhub_token,     path: "{{ jenkins_dockerhub_token_ssm }}" }
   register: jenkins_jcas_secret_results
   changed_when: false
   no_log: true

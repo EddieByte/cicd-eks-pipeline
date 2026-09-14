@@ -175,6 +175,21 @@ aws ssm put-parameter `
   --type SecureString `
   --overwrite `
   --region $region
+
+# DockerHub credentials — used by Jenkins JCasC for image build and push
+aws ssm put-parameter `
+  --name "/jenkins/dockerhub-username" `
+  --value "<your-dockerhub-username>" `
+  --type String `
+  --overwrite `
+  --region $region
+
+aws ssm put-parameter `
+  --name "/jenkins/dockerhub-token" `
+  --value "<your-dockerhub-access-token>" `
+  --type SecureString `
+  --overwrite `
+  --region $region
 ```
 
 > `/jenkins/master-public-key` and `/jenkins/sonarqube-token` are created automatically
@@ -189,6 +204,8 @@ aws ssm put-parameter `
 | `/sonarqube/db-password` | SecureString | You (above) | PostgreSQL password |
 | `/jenkins/github-username` | String | You (above) | GitHub username for JCasC credential |
 | `/jenkins/github-token` | SecureString | You (above) | GitHub PAT for JCasC credential |
+| `/jenkins/dockerhub-username` | String | You (above) | DockerHub username for JCasC credential |
+| `/jenkins/dockerhub-token` | SecureString | You (above) | DockerHub access token for JCasC credential |
 | `/jenkins/master-public-key` | String | Ansible (master role) | Master SSH public key — read by agent role |
 | `/jenkins/sonarqube-token` | SecureString | You (Step 6) | SonarQube analysis token for JCasC |
 
@@ -586,7 +603,7 @@ These apply to the cloud deployment exactly as they apply to the local smoke tes
 Before considering the deployment complete:
 
 - [ ] `aws sts get-caller-identity` returns the expected account and region.
-- [ ] All five pre-deployment SSM parameters exist in `us-east-1`.
+- [ ] All seven pre-deployment SSM parameters exist in `us-east-1`.
 - [ ] `terraform validate` passes in both `terraform/jenkins` and `terraform/eks`.
 - [ ] `ansible all -m ping` succeeds from the control node.
 - [ ] `ansible-playbook playbooks/site.yml` completes without failures.
@@ -652,6 +669,8 @@ $region = "us-east-1"
   "/jenkins/master-public-key",
   "/jenkins/github-username",
   "/jenkins/github-token",
+  "/jenkins/dockerhub-username",
+  "/jenkins/dockerhub-token",
   "/jenkins/sonarqube-token",
   "/sonarqube/db-username",
   "/sonarqube/db-password"
