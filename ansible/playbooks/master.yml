@@ -4,6 +4,7 @@
   become: true
   vars:
     ssm_parameter_name: "/jenkins/master-public-key"
+    aws_region: "us-east-1"
     # Manual-first mode installs Jenkins and prepares SSH trust without taking
     # ownership of plugins, credentials, jobs, or UI configuration.
     jenkins_manage_configuration: true

@@ -127,7 +127,7 @@
     --region {{ aws_region | quote }}
   register: jenkins_ssh_private_key
   changed_when: false
-  # no_log: true  -- temporarily disabled to diagnose failure
+  no_log: true
   when: jenkins_manage_configuration | bool
 
 - name: Install the EC2 private key as a Jenkins credential source file
