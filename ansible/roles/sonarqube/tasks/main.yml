@@ -177,6 +177,23 @@
     sonar_admin_password: "{{ sonar_admin_password_result.stdout }}"
   no_log: true
 
+- name: Set SonarQube admin password to SSM value on fresh install
+  uri:
+    url: "http://localhost:9000/api/users/change_password"
+    method: POST
+    user: admin
+    password: "admin"
+    force_basic_auth: yes
+    body_format: form-urlencoded
+    body:
+      login: "admin"
+      password: "{{ sonar_admin_password }}"
+      previousPassword: "admin"
+    status_code: [200, 204]
+  no_log: true
+  # Ignore failure — if the default password was already changed this will return 401
+  failed_when: false
+
 - name: Check if Jenkins webhook already exists in SonarQube
   uri:
     url: "http://localhost:9000/api/webhooks/list"
