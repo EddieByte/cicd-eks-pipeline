@@ -11,7 +11,7 @@ workflow-aggregator
 workflow-job
 workflow-cps
 # SSH build agents lets Jenkins launch the Linux agent over SSH.
-ssh-build-agents
+ssh-slaves
 # SonarQube integration injects the configured server environment.
 sonar
 # Docker Pipeline support is required by application container pipelines.
