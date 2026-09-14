@@ -7,11 +7,6 @@ filters:
   tag:Project: eddie-register-app
   instance-state-name: running
 
-# Prefix all host variables returned by the EC2 plugin with ec2_ so that the
-# raw 'tags' dict becomes 'ec2_tags' and does not collide with Ansible's
-# reserved 'tags' variable name.
-hostvars_prefix: ec2_
-
 keyed_groups:
   - key: tags.Name
     separator: ""
