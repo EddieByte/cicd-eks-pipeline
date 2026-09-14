@@ -23,21 +23,21 @@ jenkins:
             sshHostKeyVerificationStrategy:
               nonVerifyingKeyVerificationStrategy: {}
 
-  # Declare the global tools referenced by application Jenkinsfiles.
-  # Maven is installed automatically by Jenkins from this version identifier.
-  tool:
-    jdk:
-      installations:
-        - name: "Java21"
-          home: "/usr/lib/jvm/java-21-openjdk-amd64"
-    maven:
-      installations:
-        - name: "Maven3"
-          properties:
-            - installSource:
-                installers:
-                  - maven:
-                      id: "3.9.9"
+# Declare the global tools referenced by application Jenkinsfiles.
+# Maven is installed automatically by Jenkins from this version identifier.
+tool:
+  jdk:
+    installations:
+      - name: "Java21"
+        home: "/usr/lib/jvm/java-21-openjdk-amd64"
+  maven:
+    installations:
+      - name: "Maven3"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.9.9"
 
 # Configure the SonarQube server name used by withSonarQubeEnv().
 unclassified:
