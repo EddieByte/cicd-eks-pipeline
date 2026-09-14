@@ -61,7 +61,8 @@ credentials:
               description: "Jenkins master to agent SSH key"
               privateKeySource:
                 directEntry:
-                  privateKey: "${AGENT_PRIVATE_KEY}"
+                  privateKey: |
+                    {{ jenkins_jcas_values.agent_private_key | indent(20) }}
           # EC2 key used by the infrastructure-config job to reach the control node.
           - basicSSHUserPrivateKey:
               id: "labs-kp"
@@ -69,7 +70,8 @@ credentials:
               description: "EC2 key for the Ansible control node"
               privateKeySource:
                 directEntry:
-                  privateKey: "${LABS_KP_PRIVATE_KEY}"
+                  privateKey: |
+                    {{ jenkins_jcas_values.labs_kp_private_key | indent(20) }}
           # GitHub credentials are read from environment variables injected at startup.
           - usernamePassword:
               id: "github"
