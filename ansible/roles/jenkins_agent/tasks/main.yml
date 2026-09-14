@@ -72,30 +72,13 @@
     name: ssh
     state: restarted
 
-- name: Get IMDSv2 token
-  uri:
-    url: http://169.254.169.254/latest/api/token
-    method: PUT
-    headers:
-      X-aws-ec2-metadata-token-ttl-seconds: "21600"
-    return_content: yes
-  register: imds_token
-
-- name: Get AWS region from instance metadata
-  uri:
-    url: http://169.254.169.254/latest/meta-data/placement/region
-    headers:
-      X-aws-ec2-metadata-token: "{{ imds_token.content }}"
-    return_content: yes
-  register: aws_region_meta
-
 - name: Pull master public key from SSM
   command: >
     aws ssm get-parameter
     --name "{{ ssm_parameter_name }}"
     --query Parameter.Value
     --output text
-    --region {{ aws_region_meta.content }}
+    --region {{ aws_region }}
   register: master_public_key
 
 - name: Ensure .ssh directory exists for jenkins user
@@ -111,3 +94,9 @@
     user: jenkins
     key: "{{ master_public_key.stdout }}"
     state: present
+
+- name: Verify authorized_keys was written
+  command: wc -l /home/jenkins/.ssh/authorized_keys
+  register: authkeys_check
+  changed_when: false
+  failed_when: authkeys_check.rc != 0 or authkeys_check.stdout.split()[0] | int == 0
