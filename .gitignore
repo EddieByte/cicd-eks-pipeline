@@ -19,9 +19,8 @@ Thumbs.db
 
 # Local deployment guide may contain environment-specific values
 docs/deployment-guide.md
-jenkins-credentials-reference.md
 # Session troubleshooting log — local only, not for public repo
 docs/session-troubleshooting-log.md
- # Local Docker Jenkins secrets and runtime files
- docker/jenkins-local/.env
+# Local Docker Jenkins secrets and runtime files
+docker/jenkins-local/.env
 argocd-next-steps.md
