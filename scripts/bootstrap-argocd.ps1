@@ -22,7 +22,7 @@ function Require-Command {
 function Invoke-TerraformOutput {
     param([Parameter(Mandatory)][string]$Name)
 
-    $value = & terraform -chdir=$TerraformDirectory output -raw $Name 2>&1
+    $value = & terraform -chdir="$TerraformDirectory" output -raw $Name 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to read Terraform output '$Name': $($value -join ' ')"
     }
