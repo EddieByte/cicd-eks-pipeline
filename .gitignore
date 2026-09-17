@@ -21,6 +21,8 @@ Thumbs.db
 docs/deployment-guide.md
 # Session troubleshooting log — local only, not for public repo
 docs/session-troubleshooting-log.md
+# EKS and ArgoCD deployment notes — local only
+docs/eks-argocd-deployment-notes.md
 # Local Docker Jenkins secrets and runtime files
 docker/jenkins-local/.env
 argocd-next-steps.md
