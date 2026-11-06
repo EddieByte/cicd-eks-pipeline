@@ -14,7 +14,7 @@ and publishes. The EKS platform runs and reconciles.
 │  ┌─────────────────┐  SSH  ┌─────────────────┐  HTTP  ┌─────────────┐  │
 │  │  Jenkins Master │──────▶│  Jenkins Agent  │───────▶│  SonarQube  │  │
 │  │  JCasC-managed  │       │  Docker CE       │        │  PostgreSQL │  │
-│  │  Port 8080      │◀──────│  Trivy · OWASP  │        │  Port 9000  │  │
+│  │  Port 8080      │◀──────│  Trivy · Maven  │        │  Port 9000  │  │
 │  └─────────────────┘  wbhk └─────────────────┘        └─────────────┘  │
 │                                      │                                   │
 │  ┌─────────────────────────────────┐ │ docker push / kustomize update   │
@@ -42,7 +42,7 @@ and publishes. The EKS platform runs and reconciles.
 | Component | Spec | Role |
 |---|---|---|
 | Jenkins Master | t3.medium, Port 8080 | Orchestrates all builds — zero executors on controller |
-| Jenkins Agent | t3.medium, Docker CE | Runs every build stage — Maven, Trivy, OWASP, Docker |
+| Jenkins Agent | t3.medium, Docker CE | Runs every build stage — Maven, SonarQube scanner, Trivy, Docker |
 | SonarQube | t3.medium, Port 9000, PostgreSQL | Static analysis + quality gate callback to Jenkins |
 | Ansible Control Node | t3.micro | Provisions all three above — bootstrapped by Terraform userdata |
 
@@ -101,8 +101,7 @@ Each EC2 instance has a scoped IAM instance profile — no long-lived AWS keys a
 3. Jenkins pipeline on Agent:
    ├── Maven build + unit tests
    ├── SonarQube analysis (blocks on quality gate failure)
-   ├── Docker build + Trivy scan
-   ├── OWASP dependency check
+   ├── Docker build + Trivy scan (report-only)
    ├── Docker push to DockerHub
    └── kustomize edit set image → commit + push to manifest repo
 4. ArgoCD detects manifest repo commit (within 3 minutes)

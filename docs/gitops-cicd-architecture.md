@@ -9,7 +9,7 @@ This document captures the key architectural decisions, operational patterns, an
 
 ### Dual-Repository Separation
 A strict two-repository model was adopted:
-- **Application repository (eddie-register-app)**: Holds Java backend and React frontend source code.
+- **Application repository (eddie-register-app)**: Holds the Java web application (JSP pages + a servlet, packaged as a WAR and run on Tomcat 9).
 - **Manifest repository (eddie-register-app-manifests)**: Holds Kubernetes desired-state manifests and GitOps configuration.
 
 This separation enforces a clean boundary between application logic and deployment infrastructure. It also supports:
@@ -27,11 +27,11 @@ This separation enforces a clean boundary between application logic and deployme
 ### Security First: DevSecOps Pipeline
 The Jenkins pipeline was designed as a quality gate, with security checks built into every release path.
 Key stages include:
-- **SonarQube analysis** for Java backend and Vite frontend
+- **SonarQube analysis** of the Java source
 - **Trivy container scanning** to detect HIGH/CRITICAL vulnerabilities
-- **Pipeline fail-fast behavior** for security or quality issues
+- **Pipeline fail-fast behavior** on SonarQube quality gate failures
 
-A vulnerability finding is not a warning — it is a fail condition that prevents unsafe images from reaching Kubernetes.
+The SonarQube quality gate is blocking: a failed gate stops the pipeline before an image is built. The Trivy scan is deliberately report-only in this lab: findings appear in the build log for review but do not stop the deployment. Switching Trivy to `--exit-code 1` turns it into a blocking gate.
 
 ### The Manifest Bridge
 Instead of using insecure, imperative deployments with `kubectl`, the pipeline updates Git manifests directly:

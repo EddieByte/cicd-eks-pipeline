@@ -17,7 +17,7 @@ provisioned by Terraform, configured by Ansible, and driven by Git.
 | Secrets Management | AWS SSM Parameter Store — KMS-encrypted, IAM-scoped, zero secrets in Git |
 | CI Pipeline | Jenkins with JCasC — fully declarative, self-configuring on every deploy |
 | Code Quality Gate | SonarQube 26.1 + PostgreSQL — blocks pipeline on quality failures |
-| Container Security | Trivy (vulnerability scan) + OWASP Dependency Check |
+| Container Security | Trivy image scan (report-only: findings are logged, the build continues) |
 | GitOps Delivery | ArgoCD v3.5.2 — continuous reconciliation of EKS cluster from Git |
 | Container Orchestration | AWS EKS (Kubernetes 1.32) — private node subnets, NAT egress |
 | Automated Token Lifecycle | SonarQube token generated via API, stored in SSM, injected into Jenkins — no manual steps |
@@ -215,6 +215,6 @@ This is a personal lab configuration. Before any production use:
 
 | Repository | Purpose |
 |---|---|
-| `eddie-register-app` | Application source — Java/React, Jenkinsfile |
+| `eddie-register-app` | Application source — Java JSP/Servlet WAR on Tomcat 9, Jenkinsfile |
 | `eddie-register-app-manifests` | Kubernetes manifests — Kustomize base + overlays |
 | `cicd-eks-pipeline` *(this repo)* | Infrastructure, CI config, GitOps platform |
