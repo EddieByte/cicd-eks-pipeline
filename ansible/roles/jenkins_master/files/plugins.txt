@@ -19,3 +19,5 @@ docker-workflow
 docker-plugin
 # Security scanning integration documented by this repository.
 dependency-check-jenkins-plugin
+# Slack Notification plugin powers slackSend in application Jenkinsfiles.
+slack

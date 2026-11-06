@@ -55,6 +55,14 @@ unclassified:
 {% if jenkins_sonarqube_token_available | default(false) %}
         credentialsId: "sonarqube-token"
 {% endif %}
+{% if jenkins_slack_token_available | default(false) %}
+  # Slack notifications used by slackSend() in application Jenkinsfiles.
+  slackNotifier:
+    teamDomain: "{{ jenkins_slack_team_domain }}"
+    tokenCredentialId: "slack-token"
+    botUser: true
+    room: "#ci-builds"
+{% endif %}
 
 # Declare stable IDs while resolving the secret values from the protected env file.
 credentials:
@@ -97,6 +105,13 @@ credentials:
               id: "sonarqube-token"
               secret: "${SONARQUBE_TOKEN}"
               description: "SonarQube analysis token"
+      {% endif %}
+      {% if jenkins_slack_token_available | default(false) %}
+            # Slack bot token is loaded from the protected environment file.
+          - string:
+              id: "slack-token"
+              secret: "${SLACK_TOKEN}"
+              description: "Slack bot token for build notifications"
       {% endif %}
 
 # No Job DSL jobs are defined here.

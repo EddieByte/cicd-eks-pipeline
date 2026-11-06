@@ -1,0 +1,388 @@
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- TITLE -->
+    <mxCell id="title" value="CI/CD GitOps Platform on AWS" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+      <mxGeometry x="450" y="20" width="700" height="44" as="geometry" />
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         LEFT COLUMN — DEVELOPER, GITHUB, SSM, TERRAFORM
+    ═══════════════════════════════════════════════ -->
+
+    <!-- Developer -->
+    <mxCell id="dev" value="Developer" style="shape=mxgraph.cisco.people.standing_man;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;aspect=fixed;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="55" y="80" width="56" height="66" as="geometry" />
+    </mxCell>
+
+    <!-- GitHub -->
+    <mxCell id="github" value="GitHub&#xa;App + Manifest Repos" style="shape=mxgraph.vcs.github;fillColor=#24292E;strokeColor=#444;fontColor=#ffffff;labelBackgroundColor=none;align=center;html=1;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;aspect=fixed;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="50" y="240" width="66" height="66" as="geometry" />
+    </mxCell>
+
+    <!-- SSM -->
+    <mxCell id="ssm" value="AWS SSM&#xa;Parameter Store" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.systems_manager_parameter_store;" vertex="1" parent="1">
+      <mxGeometry x="53" y="430" width="56" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="ssm_sub" value="KMS Encrypted · 10 params" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="30" y="490" width="102" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- TERRAFORM — prominently outside both VPCs -->
+    <mxCell id="tf" value="Terraform" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#7B42BC;labelBackgroundColor=none;align=center;html=1;fontSize=11;fontStyle=1;aspect=fixed;shape=mxgraph.logos.terraform;" vertex="1" parent="1">
+      <mxGeometry x="47" y="610" width="70" height="63" as="geometry" />
+    </mxCell>
+    <mxCell id="tf_sub" value="Provisions both VPCs&#xa;from workstation" style="text;html=1;align=center;fontSize=8;fontColor=#7B42BC;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="25" y="676" width="114" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- Dev → GitHub -->
+    <mxCell id="e_dev_gh" value="git push" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555;strokeWidth=2;fontSize=9;fontColor=#555;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="dev" target="github" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Dev → SSM (pre-deploy secrets) -->
+    <mxCell id="e_dev_ssm" value="ssm put-parameter" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E8A838;strokeWidth=1.5;dashed=1;dashPattern=6 3;fontSize=9;fontColor=#E8A838;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="github" target="ssm" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         TERRAFORM ARROWS — into both VPCs
+    ═══════════════════════════════════════════════ -->
+
+    <!-- Terraform → CI Platform VPC -->
+    <mxCell id="e_tf_ci" value="terraform apply&#xa;(terraform/jenkins)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#7B42BC;strokeWidth=2.5;fontSize=9;fontColor=#7B42BC;fontStyle=1;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.85;entryDx=0;entryDy=0;" edge="1" source="tf" target="ci_vpc" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Terraform → EKS VPC -->
+    <mxCell id="e_tf_eks" value="terraform apply&#xa;(terraform/eks)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#7B42BC;strokeWidth=2.5;fontSize=9;fontColor=#7B42BC;fontStyle=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.85;entryDx=0;entryDy=0;" edge="1" source="tf" target="eks_vpc" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="160" y="654" />
+          <mxPoint x="160" y="830" />
+          <mxPoint x="195" y="830" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         CI PLATFORM VPC
+    ═══════════════════════════════════════════════ -->
+    <mxCell id="ci_vpc" value="CI Platform VPC — 10.10.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#1A73E8;fillColor=#EBF5FB;verticalAlign=top;align=center;spacingTop=25;fontSize=12;fontStyle=1;fontColor=#1A73E8;dashed=1;dashPattern=8 4;" vertex="1" parent="1">
+      <mxGeometry x="195" y="60" width="790" height="560" as="geometry" />
+    </mxCell>
+
+    <!-- Ansible Control Node -->
+    <mxCell id="ansible" value="Ansible&#xa;Control Node" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#EE0000;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.logos.ansible;" vertex="1" parent="1">
+      <mxGeometry x="222" y="105" width="56" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="ansible_sub" value="t3.micro · Self-bootstrapped&#xa;Provisions all EC2s" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="200" y="163" width="100" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- Jenkins Master -->
+    <mxCell id="jenkins_m" value="Jenkins Master" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#D33833;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.logos.jenkins;" vertex="1" parent="1">
+      <mxGeometry x="390" y="100" width="54" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="jm_sub" value="JCasC · Port 8080&#xa;0 controller executors" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="370" y="162" width="94" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- SonarQube EC2 -->
+    <mxCell id="sonar_ec2" value="SonarQube EC2" style="shape=mxgraph.logos.sonarqube;fillColor=#549DD0;strokeColor=none;fontColor=#232F3E;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;" vertex="1" parent="1">
+      <mxGeometry x="570" y="100" width="56" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="sonar_sub" value="PostgreSQL · Port 9000&#xa;Token auto-generated" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="548" y="158" width="100" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- PIPELINE STAGES GROUP -->
+    <mxCell id="pipeline_grp" value="Jenkins Agent — t3.medium · Docker CE · All builds run here (0 executors on Master)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;strokeColor=#D84315;fillColor=#FFF3E0;verticalAlign=top;align=center;spacingTop=18;fontSize=9;fontStyle=1;fontColor=#D84315;dashed=1;dashPattern=5 3;" vertex="1" parent="1">
+      <mxGeometry x="210" y="210" width="755" height="190" as="geometry" />
+    </mxCell>
+
+    <!-- Stage 1: Build -->
+    <mxCell id="s1" value="Build &amp; Test" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=9;fontStyle=1;arcSize=30;" vertex="1" parent="1">
+      <mxGeometry x="225" y="260" width="100" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="s1s" value="Maven · Java 21" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="225" y="306" width="100" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- Stage 2: SonarQube -->
+    <mxCell id="s2" value="SonarQube&#xa;Analysis" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=9;fontStyle=1;fontColor=#1565C0;arcSize=30;" vertex="1" parent="1">
+      <mxGeometry x="345" y="260" width="100" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="s2s" value="Quality Gate" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="345" y="306" width="100" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- Stage 3: Trivy -->
+    <mxCell id="s3" value="Trivy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=9;fontStyle=1;fontColor=#C62828;arcSize=30;" vertex="1" parent="1">
+      <mxGeometry x="465" y="260" width="100" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="s3s" value="Container Vuln Scan" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="465" y="306" width="100" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- Stage 4: OWASP -->
+    <mxCell id="s4" value="OWASP DC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;fontSize=9;fontStyle=1;fontColor=#E65100;arcSize=30;" vertex="1" parent="1">
+      <mxGeometry x="585" y="260" width="100" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="s4s" value="Dependency Check" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="585" y="306" width="100" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- Stage 5: Docker -->
+    <mxCell id="s5" value="Docker&#xa;Build + Push" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=9;fontStyle=1;fontColor=#1B5E20;arcSize=30;" vertex="1" parent="1">
+      <mxGeometry x="705" y="260" width="100" height="44" as="geometry" />
+    </mxCell>
+    <mxCell id="s5s" value="→ DockerHub" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="705" y="306" width="100" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- Pipeline arrows -->
+    <mxCell id="pa1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#888;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="s1" target="s2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="pa2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#888;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="s2" target="s3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="pa3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#888;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="s3" target="s4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="pa4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#888;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="s4" target="s5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Kustomize update box -->
+    <mxCell id="kustomize" value="kustomize edit set image → git push to Manifest Repo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#1B5E20;fontSize=9;fontStyle=1;arcSize=20;" vertex="1" parent="1">
+      <mxGeometry x="365" y="440" width="350" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- DockerHub -->
+    <mxCell id="dockerhub" value="DockerHub&#xa;Registry" style="shape=mxgraph.logos.docker;fillColor=#2391E6;strokeColor=none;fontColor=#232F3E;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;" vertex="1" parent="1">
+      <mxGeometry x="830" y="240" width="66" height="58" as="geometry" />
+    </mxCell>
+    <mxCell id="dh_sub" value="eddiebyte/eddie-register-app" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="808" y="300" width="110" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         CI PLATFORM INTERNAL CONNECTIONS
+    ═══════════════════════════════════════════════ -->
+
+    <!-- SSM → Ansible -->
+    <mxCell id="e_ssm_ans" value="secrets at boot" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E8A838;strokeWidth=1.5;dashed=1;dashPattern=6 3;fontSize=9;fontColor=#E8A838;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=25;entryDy=0;" edge="1" source="ssm" target="ansible" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- SSM → Jenkins Master -->
+    <mxCell id="e_ssm_jm" value="JCasC secrets" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E8A838;strokeWidth=1.5;dashed=1;dashPattern=6 3;fontSize=9;fontColor=#E8A838;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=20;entryDy=0;" edge="1" source="ssm" target="jenkins_m" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- GitHub → Jenkins (webhook) -->
+    <mxCell id="e_gh_jm" value="webhook" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555;strokeWidth=2;dashed=1;dashPattern=7 4;fontSize=9;fontColor=#555;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="github" target="jenkins_m" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="150" y="273" />
+          <mxPoint x="150" y="130" />
+          <mxPoint x="390" y="130" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Ansible → Jenkins Master -->
+    <mxCell id="e_ans_jm" value="Ansible SSH" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8E44AD;strokeWidth=2;fontSize=9;fontColor=#8E44AD;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="ansible" target="jenkins_m" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Ansible → SonarQube EC2 -->
+    <mxCell id="e_ans_sq" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8E44AD;strokeWidth=2;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="ansible" target="sonar_ec2" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Ansible → Agent (provisions) -->
+    <mxCell id="e_ans_ag" value="provisions agent" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8E44AD;strokeWidth=2;fontSize=9;fontColor=#8E44AD;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=20;entryDy=10;" edge="1" source="ansible" target="pipeline_grp" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Jenkins Master → Agent (SSH launch) -->
+    <mxCell id="e_jm_ag" value="SSH launch" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D84315;strokeWidth=2;fontSize=9;fontColor=#D84315;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=8;" edge="1" source="jenkins_m" target="pipeline_grp" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- SonarQube stage → SonarQube EC2 -->
+    <mxCell id="e_s2_sq" value="analysis" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1565C0;strokeWidth=1.5;fontSize=9;fontColor=#1565C0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" source="s2" target="sonar_ec2" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- SonarQube EC2 → Jenkins Master (webhook) -->
+    <mxCell id="e_sq_jm" value="quality gate callback" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1565C0;strokeWidth=1.5;dashed=1;dashPattern=5 3;fontSize=9;fontColor=#1565C0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.8;entryDx=0;entryDy=0;" edge="1" source="sonar_ec2" target="jenkins_m" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Docker stage → DockerHub -->
+    <mxCell id="e_s5_dh" value="docker push" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1B5E20;strokeWidth=2;fontSize=9;fontColor=#1B5E20;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="s5" target="dockerhub" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Docker → Kustomize -->
+    <mxCell id="e_s5_ku" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2E7D32;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="s5" target="kustomize" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Kustomize → GitHub Manifest -->
+    <mxCell id="e_ku_gh" value="manifest update" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2E7D32;strokeWidth=2;fontSize=9;fontColor=#2E7D32;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="kustomize" target="github" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         EKS PLATFORM VPC
+    ═══════════════════════════════════════════════ -->
+    <mxCell id="eks_vpc" value="EKS Platform VPC — 10.20.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#2E7D32;fillColor=#EAFAF1;verticalAlign=top;align=center;spacingTop=25;fontSize=12;fontStyle=1;fontColor=#2E7D32;dashed=1;dashPattern=8 4;" vertex="1" parent="1">
+      <mxGeometry x="195" y="660" width="790" height="430" as="geometry" />
+    </mxCell>
+
+    <!-- EKS Control Plane -->
+    <mxCell id="eks" value="EKS Control Plane" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;" vertex="1" parent="1">
+      <mxGeometry x="222" y="700" width="56" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="eks_sub" value="eddie-register-app-eks&#xa;Kubernetes 1.32 · OIDC" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="198" y="758" width="104" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- ArgoCD -->
+    <mxCell id="argocd" value="ArgoCD v3.5.2" style="shape=mxgraph.logos.argocd;fillColor=#EF7B4D;strokeColor=none;fontColor=#232F3E;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;" vertex="1" parent="1">
+      <mxGeometry x="400" y="695" width="66" height="72" as="geometry" />
+    </mxCell>
+    <mxCell id="argo_sub" value="GitOps Controller&#xa;Watches Manifest Repo" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="378" y="769" width="110" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- Private Nodes Group -->
+    <mxCell id="nodes_grp" value="Private Subnets — EKS Managed Node Group (2× t3.medium)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;strokeColor=#7B1FA2;fillColor=#F3E5F5;verticalAlign=top;align=center;spacingTop=18;fontSize=9;fontStyle=1;fontColor=#7B1FA2;dashed=1;dashPattern=5 3;" vertex="1" parent="1">
+      <mxGeometry x="560" y="690" width="400" height="170" as="geometry" />
+    </mxCell>
+
+    <!-- App Workloads -->
+    <mxCell id="app_wl" value="App Workloads" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#E7157B;labelBackgroundColor=none;align=center;html=1;fontSize=9;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eks;" vertex="1" parent="1">
+      <mxGeometry x="596" y="728" width="48" height="48" as="geometry" />
+    </mxCell>
+    <mxCell id="awl_sub" value="us-east-1a + 1b" style="text;html=1;align=center;fontSize=8;fontColor=#555;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="582" y="778" width="76" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- ArgoCD Pods -->
+    <mxCell id="argo_pod" value="ArgoCD Pods" style="shape=mxgraph.logos.argocd;fillColor=#EF7B4D;strokeColor=none;fontColor=#232F3E;labelBackgroundColor=none;align=center;html=1;fontSize=9;aspect=fixed;" vertex="1" parent="1">
+      <mxGeometry x="836" y="726" width="52" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="ap_sub" value="argocd namespace" style="text;html=1;align=center;fontSize=8;fontColor=#555;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="820" y="784" width="84" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- NAT Gateway -->
+    <mxCell id="nat" value="NAT Gateway" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.nat_gateway;" vertex="1" parent="1">
+      <mxGeometry x="222" y="870" width="56" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="nat_sub" value="Elastic IP · us-east-1a&#xa;Node image pull egress" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="196" y="928" width="108" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- Load Balancer -->
+    <mxCell id="elb" value="AWS Load Balancer" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;fillColor=#8C4FFF;labelBackgroundColor=none;align=center;html=1;fontSize=10;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elb;" vertex="1" parent="1">
+      <mxGeometry x="540" y="870" width="56" height="56" as="geometry" />
+    </mxCell>
+    <mxCell id="elb_sub" value="Provisioned by&#xa;cloud-controller-manager" style="text;html=1;align=center;fontSize=8;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="514" y="928" width="108" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- End Users -->
+    <mxCell id="users" value="End Users" style="shape=mxgraph.cisco.people.standing_man;fillColor=#d5e8d4;strokeColor=#82b366;html=1;aspect=fixed;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="810" y="865" width="56" height="66" as="geometry" />
+    </mxCell>
+    <mxCell id="users_sub" value="HTTP via ELB DNS" style="text;html=1;align=center;fontSize=8;fontColor=#555;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="792" y="933" width="92" height="14" as="geometry" />
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         EKS INTERNAL CONNECTIONS
+    ═══════════════════════════════════════════════ -->
+
+    <!-- GitHub → ArgoCD (detects manifest commit) -->
+    <mxCell id="e_gh_argo" value="ArgoCD detects commit" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2E7D32;strokeWidth=2.5;fontSize=9;fontColor=#2E7D32;fontStyle=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="github" target="argocd" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="83" y="620" />
+          <mxPoint x="83" y="730" />
+          <mxPoint x="400" y="730" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ArgoCD → EKS -->
+    <mxCell id="e_argo_eks" value="kubectl apply" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2E7D32;strokeWidth=2;fontSize=9;fontColor=#2E7D32;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="argocd" target="eks" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- EKS → App Workloads -->
+    <mxCell id="e_eks_app" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#7B1FA2;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="eks" target="app_wl" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ArgoCD → ArgoCD pods -->
+    <mxCell id="e_argo_pod" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#7B1FA2;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="argocd" target="argo_pod" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- App Workloads → ELB -->
+    <mxCell id="e_app_elb" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1565C0;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="app_wl" target="elb" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Nodes pull via NAT -->
+    <mxCell id="e_nodes_nat" value="image pull" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1565C0;strokeWidth=1.5;dashed=1;dashPattern=5 3;fontSize=9;fontColor=#1565C0;exitX=0;exitY=1;exitDx=20;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="nodes_grp" target="nat" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- NAT → DockerHub -->
+    <mxCell id="e_nat_dh" value="via NAT" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1565C0;strokeWidth=1.5;dashed=1;dashPattern=5 3;fontSize=9;fontColor=#1565C0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=20;entryDy=0;" edge="1" source="nat" target="dockerhub" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="960" y="898" />
+          <mxPoint x="960" y="270" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ELB → Users -->
+    <mxCell id="e_elb_users" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555;strokeWidth=2;fontSize=9;fontColor=#555;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="elb" target="users" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════════
+         LEGEND
+    ═══════════════════════════════════════════════ -->
+    <mxCell id="legend" value="Legend" style="text;html=1;strokeColor=#CCC;fillColor=#FAFAFA;align=left;verticalAlign=top;spacingLeft=10;rounded=1;fontSize=10;fontStyle=1;fontColor=#333;" vertex="1" parent="1">
+      <mxGeometry x="1030" y="60" width="170" height="170" as="geometry" />
+    </mxCell>
+    <mxCell id="l1" value="Terraform provisions" style="text;html=1;align=left;fontSize=9;fontColor=#7B42BC;strokeColor=none;fillColor=none;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="84" width="150" height="14" as="geometry" />
+    </mxCell>
+    <mxCell id="l2" value="Ansible SSH config" style="text;html=1;align=left;fontSize=9;fontColor=#8E44AD;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="104" width="150" height="14" as="geometry" />
+    </mxCell>
+    <mxCell id="l3" value="SSM secret fetch" style="text;html=1;align=left;fontSize=9;fontColor=#E8A838;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="124" width="150" height="14" as="geometry" />
+    </mxCell>
+    <mxCell id="l4" value="GitOps / deploy" style="text;html=1;align=left;fontSize=9;fontColor=#2E7D32;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="144" width="150" height="14" as="geometry" />
+    </mxCell>
+    <mxCell id="l5" value="Docker / image pull" style="text;html=1;align=left;fontSize=9;fontColor=#1565C0;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="164" width="150" height="14" as="geometry" />
+    </mxCell>
+    <mxCell id="l6" value="Webhook / HTTP" style="text;html=1;align=left;fontSize=9;fontColor=#555;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="184" width="150" height="14" as="geometry" />
+    </mxCell>
+    <mxCell id="l7" value="Pipeline stage flow" style="text;html=1;align=left;fontSize=9;fontColor=#888;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1044" y="204" width="150" height="14" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>

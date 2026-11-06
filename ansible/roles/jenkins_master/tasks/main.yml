@@ -167,6 +167,18 @@
   failed_when: false
   when: jenkins_manage_configuration | bool
 
+- name: Check whether the optional Slack token exists
+  command: >-
+    aws ssm get-parameter
+    --name {{ jenkins_slack_token_ssm | default('/jenkins/slack-token') | quote }}
+    --query Parameter.Name
+    --output text
+    --region {{ aws_region | quote }}
+  register: jenkins_slack_token_check
+  changed_when: false
+  failed_when: false
+  when: jenkins_manage_configuration | bool
+
 - name: Retrieve Jenkins secret values from SSM Parameter Store
   command: >-
     aws ssm get-parameter
@@ -194,8 +206,9 @@
 
 - name: Build the JCasC secret-value map without exposing values in output
   set_fact:
-    jenkins_jcas_values: "{{ dict(jenkins_jcas_secret_results.results | map(attribute='item.key') | zip(jenkins_jcas_secret_results.results | map(attribute='stdout'))) | combine({'sonarqube_token': '', 'agent_private_key': jenkins_agent_private_key_raw.content | b64decode, 'labs_kp_private_key': jenkins_ssh_private_key.stdout}) }}"
+    jenkins_jcas_values: "{{ dict(jenkins_jcas_secret_results.results | map(attribute='item.key') | zip(jenkins_jcas_secret_results.results | map(attribute='stdout'))) | combine({'sonarqube_token': '', 'slack_token': '', 'agent_private_key': jenkins_agent_private_key_raw.content | b64decode, 'labs_kp_private_key': jenkins_ssh_private_key.stdout}) }}"
     jenkins_sonarqube_token_available: "{{ jenkins_sonarqube_token_check.rc | int == 0 }}"
+    jenkins_slack_token_available: "{{ jenkins_slack_token_check.rc | int == 0 }}"
   no_log: true
   when: jenkins_manage_configuration | bool
 
@@ -221,6 +234,29 @@
   when:
     - jenkins_manage_configuration | bool
     - jenkins_sonarqube_token_available | default(false) | bool
+
+- name: Retrieve the optional Slack token when it has been created
+  command: >-
+    aws ssm get-parameter
+    --name {{ jenkins_slack_token_ssm | default('/jenkins/slack-token') | quote }}
+    --with-decryption
+    --query Parameter.Value
+    --output text
+    --region {{ aws_region | quote }}
+  register: jenkins_slack_token
+  changed_when: false
+  no_log: true
+  when:
+    - jenkins_manage_configuration | bool
+    - jenkins_slack_token_available | default(false) | bool
+
+- name: Add the optional Slack token to the JCasC secret map
+  set_fact:
+    jenkins_jcas_values: "{{ jenkins_jcas_values | combine({'slack_token': jenkins_slack_token.stdout}) }}"
+  no_log: true
+  when:
+    - jenkins_manage_configuration | bool
+    - jenkins_slack_token_available | default(false) | bool
 
 - name: Render the protected JCasC environment file
   template:

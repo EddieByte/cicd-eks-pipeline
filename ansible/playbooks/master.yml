@@ -17,6 +17,11 @@
     jenkins_dockerhub_username_ssm: "/jenkins/dockerhub-username"
     jenkins_dockerhub_token_ssm: "/jenkins/dockerhub-token"
     jenkins_sonarqube_token_ssm: "/jenkins/sonarqube-token"
+    # Optional: Slack bot token for build notifications. If this parameter does
+    # not exist, Slack is simply not configured and everything else still works.
+    jenkins_slack_token_ssm: "/jenkins/slack-token"
+    # Your Slack workspace subdomain (the part before .slack.com). Not a secret.
+    jenkins_slack_team_domain: "CHANGE-ME"
     # Discover the service endpoints from the EC2 dynamic inventory.
     jenkins_agent_private_ip: "{{ hostvars[groups['Jenkins_Agent'][0]].private_ip_address }}"
     sonarqube_url: "http://{{ hostvars[groups['SonarQube'][0]].ansible_host }}:9000"
