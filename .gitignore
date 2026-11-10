@@ -26,3 +26,4 @@ docs/eks-argocd-deployment-notes.md
 # Local Docker Jenkins secrets and runtime files
 docker/jenkins-local/.env
 argocd-next-steps.md
+setup-secrets.ps1
