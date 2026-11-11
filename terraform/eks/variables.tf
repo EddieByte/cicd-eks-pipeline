@@ -78,3 +78,41 @@ variable "tags" {
     ManagedBy   = "Terraform"
   }
 }
+
+# -- Database (RDS PostgreSQL) -------------------------------------------------
+
+variable "db_identifier" {
+  description = "Name of the RDS instance"
+  type        = string
+  default     = "register-app-db"
+}
+
+variable "db_name" {
+  description = "Database created inside PostgreSQL for the app"
+  type        = string
+  default     = "registerapp"
+}
+
+variable "db_username" {
+  description = "Master user the app connects as"
+  type        = string
+  default     = "registerapp_admin"
+}
+
+variable "db_instance_class" {
+  description = "RDS instance size (db.t4g.micro is the smallest, roughly USD 0.02/hour)"
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_engine_version" {
+  description = "PostgreSQL major version"
+  type        = string
+  default     = "16"
+}
+
+variable "db_password_ssm" {
+  description = "SSM SecureString holding the database password (created by scripts/setup-secrets.ps1)"
+  type        = string
+  default     = "/app/db-password"
+}

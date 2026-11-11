@@ -20,6 +20,7 @@ provisioned by Terraform, configured by Ansible, and driven by Git.
 | Container Security | Trivy image scan (report-only: findings are logged, the build continues) |
 | GitOps Delivery | ArgoCD v3.5.2 — continuous reconciliation of EKS cluster from Git |
 | Container Orchestration | AWS EKS (Kubernetes 1.32) — private node subnets, NAT egress |
+| Database | Amazon RDS PostgreSQL 16 (db.t4g.micro) — private subnets, reachable only from the cluster |
 | Automated Token Lifecycle | SonarQube token generated via API, stored in SSM, injected into Jenkins — no manual steps |
 
 ---
@@ -96,6 +97,7 @@ early.
 5.  Deploy EKS cluster                terraform init -backend-config="../backend.hcl"
                                       terraform apply  (terraform/eks/)
 6.  Install ArgoCD                    .\scripts\bootstrap-argocd.ps1
+6b. Create Kubernetes secrets         .\scripts\sync-k8s-secrets.ps1  (DB, Grafana, Slack)
 7.  Connect manifest repository       ArgoCD UI → Settings → Repositories
 8.  Configure GitHub webhook          App repo → Settings → Webhooks
 9.  Push a commit                     Full pipeline runs automatically
