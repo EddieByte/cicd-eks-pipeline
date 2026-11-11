@@ -1,4 +1,14 @@
 terraform {
+  # S3-native state locking needs Terraform 1.10 or newer.
+  required_version = ">= 1.10"
+
+  # Remote state in S3. The bucket, region, encryption and locking settings come
+  # from terraform/backend.hcl (created by scripts/bootstrap-state-bucket.ps1):
+  #   terraform init -reconfigure -backend-config="../backend.hcl"
+  backend "s3" {
+    key = "jenkins/terraform.tfstate"
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"

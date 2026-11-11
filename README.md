@@ -12,7 +12,7 @@ provisioned by Terraform, configured by Ansible, and driven by Git.
 
 | Capability | Implementation |
 |---|---|
-| Infrastructure as Code | Terraform — two independent stacks (CI platform + EKS cluster) |
+| Infrastructure as Code | Terraform — two independent stacks (CI platform + EKS cluster), remote state in S3 with native locking |
 | Configuration Management | Ansible — idempotent, EC2 dynamic inventory, zero manual SSH for config |
 | Secrets Management | AWS SSM Parameter Store — KMS-encrypted, IAM-scoped, zero secrets in Git |
 | CI Pipeline | Jenkins with JCasC — fully declarative, self-configuring on every deploy |
@@ -87,11 +87,14 @@ early.
 > fetches `/jenkins/ssh-private-key` at boot — if it doesn't exist, the bootstrap fails.
 
 ```
-1.  Store SSM parameters              aws ssm put-parameter ...
-2.  Deploy CI platform                terraform apply  (terraform/jenkins/)
+0.  Create the state bucket (once)    .\scripts\bootstrap-state-bucket.ps1
+1.  Store SSM parameters              .\scripts\setup-secrets.ps1
+2.  Deploy CI platform                terraform init -backend-config="../backend.hcl"
+                                      terraform apply  (terraform/jenkins/)
 3.  Run Ansible                       ansible-playbook playbooks/site.yml
 4.  Complete Jenkins setup wizard     one-time, manual
-5.  Deploy EKS cluster                terraform apply  (terraform/eks/)
+5.  Deploy EKS cluster                terraform init -backend-config="../backend.hcl"
+                                      terraform apply  (terraform/eks/)
 6.  Install ArgoCD                    .\scripts\bootstrap-argocd.ps1
 7.  Connect manifest repository       ArgoCD UI → Settings → Repositories
 8.  Configure GitHub webhook          App repo → Settings → Webhooks
@@ -197,6 +200,14 @@ Set-Location ..\jenkins       && terraform destroy
 
 SSM parameters are not managed by Terraform — delete them manually if no longer needed.
 
+The S3 state bucket is kept on purpose: it is tiny, costs almost nothing, and holds the
+record of what Terraform created. Only delete it after both stacks are destroyed and you
+are finished with the project:
+
+```powershell
+aws s3 rb s3://cicd-eks-pipeline-tfstate-<account-id> --force
+```
+
 ---
 
 ## Production Hardening
@@ -206,7 +217,7 @@ This is a personal lab configuration. Before any production use:
 - Restrict SSH CIDRs to known IPs in both `terraform.tfvars` files
 - Restrict SonarQube port 9000 or place behind an authenticated load balancer
 - Lock down EKS public endpoint CIDRs
-- Move Terraform state to S3 + DynamoDB backend
+- Enable versioning on the Terraform state bucket (`bootstrap-state-bucket.ps1 -EnableVersioning`)
 - Use private subnets for CI platform EC2 instances
 
 ---
