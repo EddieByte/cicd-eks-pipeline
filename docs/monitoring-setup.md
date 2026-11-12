@@ -3,13 +3,19 @@
 Adds Slack notifications to the pipeline and Prometheus + Grafana monitoring to the EKS
 cluster. Every step is independent, can be verified before moving on, and has a rollback.
 
+> **Already set up?** For a routine rebuild after a teardown, follow
+> [redeploy-runbook.md](redeploy-runbook.md) instead. This guide explains how each piece
+> works and how to add it the first time. Since it was written, all Kubernetes Secrets are
+> created in one step by `scripts/sync-k8s-secrets.ps1`, which replaces the manual secret
+> commands in Steps 2 and 3b.
+
 | Step | What you get | Touches the running app? |
 |---|---|---|
 | 0. Slack setup | Slack app, channels, tokens in SSM | No |
 | 1. Jenkins → Slack | `#ci-builds`: build passed / failed | No (Jenkins restarts once) |
 | 2. ArgoCD → Slack | `#deployments`: deployed / sync failed / degraded | No |
 | 3. Monitoring stack | Grafana dashboards, pod health alerts → `#alerts` | No (new `monitoring` namespace) |
-| 4. Blackbox probe | Uptime + response time of `/home.jsp` → `#alerts` | No |
+| 4. Blackbox probe | Uptime + response time of `/home.jsp`, database health via `/health` → `#alerts` | No |
 
 **What does not change:** the app's Dockerfile, its source code, `base/` and `overlays/`
 in the manifests repo, and Terraform (unless Step 3a says you need a third node).
@@ -104,9 +110,8 @@ subscriptions.
 # 1. Install the standard notification templates and triggers (matches your ArgoCD version)
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/notifications_catalog/install.yaml
 
-# 2. Give the notifications controller the same Slack bot token
-$token = aws ssm get-parameter --region us-east-1 --name /jenkins/slack-token --with-decryption --query Parameter.Value --output text
-kubectl -n argocd create secret generic argocd-notifications-secret --from-literal=slack-token=$token --dry-run=client -o yaml | kubectl apply -f -
+# 2. Give the notifications controller the same Slack bot token (from the cicd-eks-pipeline repo)
+.\scripts\sync-k8s-secrets.ps1
 
 # 3. Register Slack as a notification service (run from the manifests repo root)
 kubectl -n argocd patch configmap argocd-notifications-cm --type merge --patch-file argocd/notifications/slack-service-patch.yaml
@@ -154,17 +159,18 @@ If not, add a third node *before* continuing. Set `node_desired = 3` in
 `terraform/eks/terraform.tfvars`, then run `terraform plan`. It should show
 `1 to change, 0 to destroy`, an in-place resize of the node group. Then run `terraform apply`.
 
-### 3b. Create the two Secrets the stack expects
+### 3b. Create the Secrets the stack expects
+
+`grafana-admin` and `alertmanager-slack` (plus the app's database secret) are created from
+SSM by one script, run from the `cicd-eks-pipeline` repo:
 
 ```powershell
-kubectl create namespace monitoring
-
-$pw = aws ssm get-parameter --region us-east-1 --name /monitoring/grafana-admin-password --with-decryption --query Parameter.Value --output text
-kubectl -n monitoring create secret generic grafana-admin --from-literal=admin-user=admin --from-literal=admin-password=$pw
-
-$hook = aws ssm get-parameter --region us-east-1 --name /monitoring/slack-webhook-url --with-decryption --query Parameter.Value --output text
-kubectl -n monitoring create secret generic alertmanager-slack --from-literal=webhook-url=$hook
+.\scripts\sync-k8s-secrets.ps1
 ```
+
+Every line should show `[OK]`. If Grafana or Alertmanager pods were started before the
+Secrets existed, they recover once the script has run (Grafana showed
+`CreateContainerConfigError` and Alertmanager `Init:0/1` when this step was skipped).
 
 ### 3c. Deploy through ArgoCD
 
@@ -245,9 +251,13 @@ The alerts `RegisterAppDown` (2 minutes without HTTP 2xx) and `RegisterAppSlow` 
 | `RegisterAppSlow` | `/home.jsp` takes over 2s for 5 minutes | warning |
 | `RegisterAppMemoryNearLimit` | Tomcat uses over 90% of its 512Mi for 10 minutes | warning |
 | `RegisterAppOOMKilled` | The container ran out of memory and restarted | warning |
+| `RegisterAppDatabaseDown` | `/health` fails for 2 minutes (app can't reach RDS) | critical |
 | `KubePodCrashLooping` (built in) | A pod keeps restarting | warning |
 | `KubeDeploymentReplicasMismatch` (built in) | Fewer pods running than desired | warning |
 | `KubeNodeNotReady` (built in) | A worker node is unhealthy | warning |
+
+Each alert posts twice: a red 🚨 message when it fires, and a green ✅ **Recovered**
+message with its own wording (e.g. "Database reachable again") when it clears.
 
 ## Teardown
 

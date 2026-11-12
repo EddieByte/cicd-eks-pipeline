@@ -63,16 +63,21 @@ This pattern avoids YAML duplication and keeps the deployment model maintainable
 ## 4. FinOps: Cluster Lifecycle and Cost Discipline
 
 ### Graceful Shutdown
-A custom `cleanup.sh` process was used to remove cost-incurring resources before cluster deletion:
-- delete LoadBalancer services
-- clean up AWS ELB / target groups
-- avoid lingering infrastructure costs after cluster teardown
+The environment is torn down in a fixed order (see [redeploy-runbook.md](redeploy-runbook.md)):
+- delete the ArgoCD Application and the app namespace first, so Kubernetes removes the
+  Classic Load Balancer it created (Terraform doesn't know about it, and it would block
+  VPC deletion)
+- then `terraform destroy` the EKS stack (cluster, NAT gateway and RDS), then the CI stack
+- a final set of AWS CLI checks confirms no instances, load balancers, volumes, IPs or
+  databases are left running
 
 ### State Preservation
 Because the infrastructure is defined in Git, destroying the cluster is not destructive work.
-- cluster recreation becomes repeatable
-- manifests restore desired state in minutes via Argo CD
-- `eksctl` can recreate the environment from source-controlled configuration
+- Terraform state lives in an S3 bucket, so either stack can be rebuilt from any machine
+- secrets stay in SSM Parameter Store between rebuilds
+- manifests restore the desired state in minutes via Argo CD, starting from the last image
+  Jenkins built
+- the only thing lost is application data: RDS is destroyed with the stack (lab setting)
 
 ## 5. Practical Lessons and Cross-Reference Notes
 
