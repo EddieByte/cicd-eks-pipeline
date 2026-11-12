@@ -31,20 +31,46 @@ in the manifests repo, and Terraform (unless Step 3a says you need a third node)
 All commands below are PowerShell, run from your machine with the EKS kubeconfig active
 (`aws eks update-kubeconfig --region us-east-1 --name eddie-register-app-eks`).
 
+Names such as `eddie-register-app`, `eddie-register-app-manifests`, `eddie-register-app-eks`
+and `eddie-register-app-dev` are this project's repos, cluster and namespaces. If you reuse
+the platform, replace them with your own (see "Adapting This for Your Own App" in the README).
+
 ---
 
 ## Step 0 — Slack setup (about 10 minutes)
 
 1. Create three channels: `#ci-builds`, `#deployments`, `#alerts`.
-2. Go to <https://api.slack.com/apps> → **Create New App** → **From scratch**. Name it
-   e.g. `Eddie CI/CD` and pick your workspace.
-3. **OAuth & Permissions** → **Bot Token Scopes** → add `chat:write`.
-   Click **Install to Workspace**, then copy the **Bot User OAuth Token** (`xoxb-...`).
-4. **Incoming Webhooks** → turn **On** → **Add New Webhook** → choose `#alerts`.
-   Copy the webhook URL (`https://hooks.slack.com/services/...`).
+2. Go to <https://api.slack.com/apps> → **Create New App** → **From a manifest** (pick your
+   workspace), switch to **YAML**, and paste:
+
+   ```yaml
+   display_information:
+     name: CICD Bot
+   features:
+     bot_user:
+       display_name: cicd-bot          # lowercase letters, digits, - _ . only (no "/" or spaces)
+       always_online: false
+   oauth_config:
+     scopes:
+       bot:
+         - chat:write                  # Jenkins and ArgoCD post messages
+         - incoming-webhook            # Alertmanager posts to #alerts
+   settings:
+     org_deploy_enabled: false
+     socket_mode_enabled: false
+     token_rotation_enabled: false     # keep false, or the token expires after a few hours
+   ```
+
+   Avoid the **Starter app** template: it adds slash commands and event listeners you'd
+   have to host.
+3. **Install to Workspace** and pick `#alerts` when asked: that creates the incoming webhook.
+4. Copy the **Bot User OAuth Token** (`xoxb-...`, under **OAuth & Permissions**) and the
+   webhook URL (under **Incoming Webhooks**). Paste them only into the next step, never
+   into chat, tickets or Git; if they leak, revoke and reinstall to get new ones.
 5. In Slack, invite the bot to the two channels it posts to:
-   type `/invite @Eddie CI/CD` in `#ci-builds` and in `#deployments`.
-6. Store the secrets in SSM, the same way as the other credentials:
+   type `/invite @cicd-bot` in `#ci-builds` and in `#deployments`.
+6. Store the secrets in SSM: run `scripts/setup-secrets.example.ps1`, which prompts for
+   them (typing is hidden), checks them with Slack and saves them. Or by hand:
 
 ```powershell
 aws ssm put-parameter --region us-east-1 --type SecureString --name /jenkins/slack-token          --value "xoxb-PASTE-TOKEN"
@@ -59,7 +85,7 @@ can already read it. No Terraform change is needed.
 
 ```powershell
 $hook = aws ssm get-parameter --region us-east-1 --name /monitoring/slack-webhook-url --with-decryption --query Parameter.Value --output text
-Invoke-RestMethod -Method Post -Uri $hook -ContentType 'application/json' -Body '{"text":"Webhook test from Eddie"}'
+Invoke-RestMethod -Method Post -Uri $hook -ContentType 'application/json' -Body '{"text":"Webhook test"}'
 ```
 
 ---
@@ -73,7 +99,8 @@ Slack plugin is installed. If the Jenkinsfile lands first, every build fails wit
 ### 1a. Configure Jenkins (infra repo)
 
 1. In `ansible/playbooks/master.yml`, set `jenkins_slack_team_domain` to your workspace
-   subdomain (for `eddie-team.slack.com` that's `eddie-team`).
+   subdomain (for `my-team.slack.com` that's `my-team`). The setup script can detect
+   it from your bot token and fill it in for you.
 2. Commit and push the `cicd-eks-pipeline` changes.
 3. Make sure **no build is running**, because installing plugins restarts Jenkins. Then run
    the `infrastructure-config` job, or on the control node:
